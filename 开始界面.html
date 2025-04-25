@@ -4,44 +4,347 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Rubik+Mono+One&family=VT323&display=swap" rel="stylesheet">
     <style>
+        /* 基础样式 - 使用vw/vh单位实现响应式 */
         body {
-            background: #5b659c;
+            background: #111;
             margin: 0;
             padding: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
-            height: 100vh;
-            color: rgba(255, 255, 255, 0.8);
+            justify-content: center;
+            min-height: 100vh; /* 使用min-height而非固定高度 */
+            color: #0f0;
+            font-family: 'VT323', monospace;
+            overflow: hidden;
+            position: relative;
+            font-size: calc(12px + 0.5vw); /* 基础字体大小响应式 */
         }
-        
+
+        /* 响应式CRT效果 - 根据屏幕大小调整 */
+        .crt-effect {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                linear-gradient(rgba(18, 16, 16, 0.1) 50%, rgba(0, 0, 0, 0.25) 50%),
+                linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background-size: 100% 0.3vh, 0.3vw 100%; /* 使用视窗单位 */
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        /* 响应式屏幕弯曲效果 */
+        .screen-curve {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(ellipse at center, transparent 0%, rgba(0,0,0,0.5) 100%);
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        /* 响应式显示器边框 */
+        .monitor-frame {
+            position: fixed;
+            top: 2vh;
+            left: 2vw;
+            right: 2vw;
+            bottom: 2vh;
+            border: 1.2vh solid #444; /* 使用视窗高度单位 */
+            border-radius: 2vh;
+            box-shadow: 
+                0 0 2vh rgba(0, 255, 0, 0.3),
+                inset 0 0 2vh rgba(0, 255, 0, 0.2);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* 响应式显示器底座 */
+        .monitor-stand {
+            position: fixed;
+            bottom: 0;
+            width: 30vw;
+            height: 3vh;
+            background: #333;
+            border-radius: 0 0 1vh 1vh;
+            box-shadow: 0 0 1vh rgba(0, 255, 0, 0.3);
+            z-index: 0;
+        }
+
+        /* 响应式标题 - 使用clamp()确保大小在合理范围内 */
         h1 {
-            font-size: 60px;
-            margin-top: 70px;
+            font-size: clamp(3rem, 8vw, 5rem); /* 最小3rem，最大5rem，根据视窗宽度变化 */
+            margin: 0 0 1vh 0;
+            text-shadow: 0 0 1vh #0f0;
+            letter-spacing: 0.5vw;
+            font-weight: normal;
+            animation: flicker 0.01s infinite alternate;
+            position: relative;
+            z-index: 2;
+            font-family: 'Rubik Mono One', sans-serif;
+            color: #ff0;
+            text-transform: uppercase;
+            text-align: center;
+            padding: 0 5vw; /* 添加内边距防止文字溢出 */
+            line-height: 1.2;
         }
-        
+
+        @keyframes flicker {
+            0% { opacity: 0.8; }
+            100% { opacity: 1; }
+        }
+
+        /* 响应式副标题 */
+        p {
+            font-size: clamp(1.2rem, 3vw, 1.8rem);
+            max-width: 80vw;
+            text-align: center;
+            margin: 0 0 3vh 0;
+            line-height: 1.6;
+            color: #0f0;
+            text-shadow: 0 0 0.5vh rgba(0, 255, 0, 0.5);
+            z-index: 2;
+            padding: 0 5vw;
+        }
+
+        /* 响应式按钮容器 */
+        .button-container {
+            margin: 2vh 0;
+            position: relative;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+
+        /* 响应式按钮 */
         button {
-            background: rgba(255, 255, 255, 0.353);
-            color: #ffffff;
-            border: 0;
-            height: 50px;
-            width: 180px;
-            border-radius: 3vh;
-            font-size: 30px;
-            margin: 30px;
+            background: #f00;
+            color: #fff;
+            border: none;
+            padding: 1.5vh 3vw;
+            border-radius: 1vh;
+            font-size: clamp(1.5rem, 4vw, 2rem);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.2s ease;
+            box-shadow: 
+                0 0.5vh 0 #800,
+                0 0 2vh rgba(255, 0, 0, 0.5);
+            min-width: 40vw;
+            max-width: 90vw;
+            text-transform: uppercase;
+            letter-spacing: 0.3vw;
+            font-family: 'Bungee', cursive;
+            margin: 1vh 0;
+        }
+
+        button:hover {
+            background: #ff3333;
+            transform: translateY(0.2vh);
+            box-shadow: 
+                0 0.3vh 0 #800,
+                0 0 3vh rgba(255, 0, 0, 0.8);
+        }
+
+        button:active {
+            transform: translateY(0.5vh);
+            box-shadow: 
+                0 0 0 #800,
+                0 0 4vh rgba(255, 0, 0, 1);
+        }
+
+        /* 响应式工作室标志 */
+        .studio {
+            position: absolute;
+            bottom: 3vh;
+            font-size: clamp(1rem, 2.5vw, 1.5rem);
+            color: #0ff;
+            text-shadow: 0 0 1vh rgba(0, 255, 255, 0.5);
+            z-index: 2;
+            font-family: 'VT323', monospace;
+            text-align: center;
+            width: 100%;
+        }
+
+        /* 响应式硬币投币口 */
+        .coin-slot {
+            position: absolute;
+            bottom: 2vh;
+            right: 2vw;
+            width: 6vw;
+            height: 1vh;
+            background: #555;
+            border-radius: 0.5vh;
+            z-index: 2;
+            max-width: 60px;
+            min-width: 40px;
+        }
+
+        /* 响应式控制台 */
+        .control-panel {
+            position: fixed;
+            bottom: 5vh;
+            width: 60vw;
+            height: 8vh;
+            background: #222;
+            border-radius: 1vh;
+            z-index: 2;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            max-width: 500px;
+            min-width: 300px;
+        }
+
+        .joystick {
+            width: 5vh;
+            height: 5vh;
+            background: #444;
+            border-radius: 50%;
+            position: relative;
+            min-width: 40px;
+            min-height: 40px;
+        }
+
+        .joystick::after {
+            content: "";
+            position: absolute;
+            width: 60%;
+            height: 60%;
+            background: #f00;
+            border-radius: 50%;
+            top: 20%;
+            left: 20%;
+        }
+
+        .action-button {
+            width: 4vh;
+            height: 4vh;
+            background: #00f;
+            border-radius: 50%;
+            box-shadow: 0 0.3vh 0 #004;
+            min-width: 30px;
+            min-height: 30px;
+        }
+
+        /* 媒体查询处理极端比例 */
+        @media (max-aspect-ratio: 1/1) {
+            /* 竖屏样式 */
+            h1 {
+                font-size: clamp(2.5rem, 6vh, 4rem);
+                margin-bottom: 0.5vh;
+            }
+            
+            p {
+                margin-bottom: 2vh;
+            }
+            
+            .button-container {
+                margin: 1vh 0;
+            }
+            
+            button {
+                padding: 1vh 3vw;
+                min-width: 60vw;
+            }
+            
+            .control-panel {
+                width: 80vw;
+                height: 6vh;
+            }
+        }
+
+        @media (max-height: 500px) {
+            /* 超矮屏幕 */
+            h1 {
+                font-size: clamp(1.8rem, 6vw, 2.5rem);
+            }
+            
+            p {
+                display: none; /* 在小高度屏幕上隐藏副标题 */
+            }
+            
+            .button-container {
+                margin: 0.5vh 0;
+            }
+            
+            .studio {
+                bottom: 1vh;
+                font-size: 0.8rem;
+            }
+        }
+
+        @media (min-width: 1200px) {
+            /* 大屏幕额外调整 */
+            .monitor-frame {
+                top: 5vh;
+                left: 5vw;
+                right: 5vw;
+                bottom: 5vh;
+            }
         }
     </style>
 </head>
 
 <body>
-    <h1>开始界面</h1>
-    <p>这只是如何设置开始界面的演示，样式用户完全自定义。</p>
-    <button onclick="开始游戏()">开始游戏</button>
+    <div class="monitor-frame"></div>
+    <div class="monitor-stand"></div>
+    <div class="crt-effect"></div>
+    <div class="screen-curve"></div>
+    
+    <h1>DONUT QUEST</h1>
+    <p>INSERT COIN TO START</p>
+    <div class="button-container">
+        <button onclick="开始游戏()">1 PLAYER</button>
+        <button onclick="开始游戏()">2 PLAYERS</button>
+    </div>
+    
+    <div class="control-panel">
+        <div class="joystick"></div>
+        <div class="action-button"></div>
+        <div class="action-button" style="background:#0f0; box-shadow:0 0.3vh 0 #080;"></div>
+    </div>
+    
+    <div class="coin-slot"></div>
+    <div class="studio">DONUT FIVE YEARS STUDIO ©1978</div>
+    
     <script>
         function 开始游戏() {
-            alert('读取存档进入游戏之后按左上角读取界面读取');
-            window.location.href = 'index.html';
+            // 添加投币音效
+            const coinSound = new Audio('data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU...');
+            coinSound.volume = 0.5;
+            coinSound.play();
+            
+            // 街机启动效果
+            const button = event.target;
+            button.innerHTML = 'READY...';
+            button.style.background = '#ff0';
+            button.style.color = '#000';
+            button.style.boxShadow = '0 0.5vh 0 #880, 0 0 3vh rgba(255, 255, 0, 0.8)';
+            
+            // 屏幕闪烁效果
+            document.body.style.animation = 'screen-flash 0.5s';
+            
+            // 模拟加载延迟
+            setTimeout(() => {
+                // 添加街机启动音效
+                const startSound = new Audio('data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU...');
+                startSound.volume = 0.5;
+                startSound.play();
+                
+                // 跳转页面
+                window.location.href = 'index.html';
+            }, 1500);
         }
     </script>
 </body>
