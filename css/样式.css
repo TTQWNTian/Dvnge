@@ -1,4 +1,4 @@
-/* TTQ视觉小说引擎1.0.4 */
+/* TTQ视觉小说引擎1.0.4-测试版 */
 /* css/样式.css */
 /* 基础样式 */
 
@@ -151,12 +151,26 @@ body {
 
 .关闭按钮 {
     position: fixed;
-    top: 10px;
-    right: 10px;
+    top: 20px;
+    right: 20px;
     font-size: 2em;
     background: none;
     border: none;
     color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+}
+
+.关闭按钮:hover {
+    color: #ff9999;
+    background: rgba(255, 255, 255, 0.1);
+    transform: rotate(90deg);
 }
 
 
@@ -227,6 +241,7 @@ body {
         opacity: 0;
         transform: translateY(20px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -238,6 +253,7 @@ body {
         opacity: 1;
         transform: translateY(0);
     }
+
     to {
         opacity: 0;
         transform: translateY(20px);
@@ -248,9 +264,11 @@ body {
     0% {
         background: rgba(255, 255, 255, 0.1)
     }
+
     50% {
         background: rgba(76, 175, 80, 0.3)
     }
+
     100% {
         background: rgba(255, 255, 255, 0.1)
     }
@@ -261,6 +279,7 @@ body {
         transform: translate(-50%, -10px);
         opacity: 0;
     }
+
     to {
         transform: translate(-50%, 0);
         opacity: 1;
