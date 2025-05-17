@@ -5,6 +5,6 @@ const 序章数据 = [
   },
   {
     角色: 'Tian',
-    内容 : "<a href='https://github.com/TTQWNTian/TTQ_Visual-Novel-Engine-Description-Document'>点击查看使用文档。</a> <br />如果上面链接打不开，使用这个<a href='https://github.com/TTQWNTian/TTQ_Visual-Novel-Engine-Description-Document'>镜像网站。</a>"
+    内容 : "<a href='https://github.com/TTQWNTian/TTQ_Visual-Novel-Engine-Description-Document'>点击查看使用文档。</a> <br />如果上面链接打不开，使用这个<a href='https://bgithub.xyz/TTQWNTian/TTQ_Visual-Novel-Engine-Description-Document'>镜像网站。</a>"
   }
 ];
