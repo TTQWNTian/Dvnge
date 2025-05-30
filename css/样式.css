@@ -6,7 +6,7 @@
     -webkit-tap-highlight-color: transparent;
     outline: none;
     box-sizing: border-box;
-    font-family: Arial, sans-serif;
+    user-select: none;
 }
 
 .隐藏 {
