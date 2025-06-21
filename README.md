@@ -14,7 +14,7 @@
 
 # 许可证
 
-本项目采用 [Creative Commons Attribution 4.0 International (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/) 许可证。
+本项目采用 [MIT License](https://opensource.org/licenses/MIT)。
 
 ## 许可条款
 
@@ -32,7 +32,7 @@
 **示例署名：**
 
 ```
-本作品基于Dvnge开发，引擎原作者为Tian，采用 CC BY 4.0 许可证。引擎开源链接：https://github.com/TTQWNTian/Dvnge
+本作品基于Dvnge开发，引擎原作者为Tian，采用 MIT License 许可证。引擎开源链接：https://github.com/TTQWNTian/Dvnge
 ```
 
 完整的许可证文本请参阅 [LICENSE.md](LICENSE.md)。
