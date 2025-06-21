@@ -19,7 +19,7 @@
 2. 在软件的所有副本中包含以下声明：
 
 
-> © [2025] [Tian/TTQ万能工作室] - 完整条款见 [MIT License](https://opensource.org/licenses/MIT)。
+> © [2025] [Tian/TTQ万能工作室] - 完整条款见 [Dvnge 的 MIT 许可证](https://github.com/TTQWNTian/Dvnge/blob/main/LICENSE.md)。
 
 
 ---
