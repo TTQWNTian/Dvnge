@@ -3,7 +3,7 @@
 > 甜甜圈万能工作室出品   
 > Web视觉小说引擎   
 > 作者：Tian   
-> 联系方式：<t17832810228@qq.com>
+> 联系方式：<TTQWNTian@qq.com>
 
 > [!CAUTION]
 > 使用前请仔细阅读许可证说明[LICENSE](LICENSE)
