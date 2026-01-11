@@ -1,4 +1,4 @@
-/* TTQ视觉小说引擎v1.1.2 */
+/* TTQ视觉小说引擎v1.2.0 */
 /* css/样式.css */
 /* 基础样式 */
 
@@ -100,9 +100,20 @@ body {
 .存档按钮 {
     padding: 12px;
     font-size: 1.2em;
-    background: rgba(255, 255, 255, 0);
+    background: transparent;
     border: none;
-    border-radius: 8px;
+    color: #fff;
+}
+
+.自定义按钮 {
+    position: fixed;
+    top: 0;
+    right: 0;
+    padding: 12px;
+    font-size: 1.2em;
+    background: transparent;
+    border: none;
+    color: #fff;
 }
 
 
