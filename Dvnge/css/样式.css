@@ -118,7 +118,6 @@ body {
 
 
 /* 存档界面 */
-
 #存档界面 {
     position: fixed;
     top: 0;
@@ -182,7 +181,6 @@ body {
 
 
 /* 存档提示样式 */
-
 .存档提示 {
     position: fixed;
     top: 20px;
@@ -202,7 +200,6 @@ body {
 
 
 /* 输入组件样式 */
-
 .输入容器 {
     display: flex;
     flex-direction: column;
@@ -243,13 +240,12 @@ body {
 
 
 /* 动画关键帧 */
-
 @keyframes 对话框进入动画 {
     from {
         opacity: 0;
         transform: translateY(20px);
     }
-
+    
     to {
         opacity: 1;
         transform: translateY(0);
@@ -261,7 +257,7 @@ body {
         opacity: 1;
         transform: translateY(0);
     }
-
+    
     to {
         opacity: 0;
         transform: translateY(20px);
@@ -273,7 +269,7 @@ body {
         transform: translate(-50%, -10px);
         opacity: 0;
     }
-
+    
     to {
         transform: translate(-50%, 0);
         opacity: 1;
@@ -286,7 +282,7 @@ body {
     color: white;
     font-size: 28px;
     margin: 0 auto;
-    text-shadow: 0px 2px 2px rgba(0,0,0,0.3);
+    text-shadow: 0px 2px 2px rgba(0, 0, 0, 0.3);
     font-weight: bold;
     text-align: center;
     max-width: 80%;
@@ -348,6 +344,7 @@ body {
         opacity: 0;
         transform: scale(0.5);
     }
+    
     to {
         opacity: 1;
     }
@@ -357,6 +354,7 @@ body {
     from {
         opacity: 1;
     }
+    
     to {
         opacity: 0;
         transform: scale(0.9);
