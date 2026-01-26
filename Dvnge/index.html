@@ -1,55 +1,222 @@
-<!-- TTQ视觉小说引擎v1.2.0 -->
-<!-- index.html -->
 <!DOCTYPE html>
-<html>
-
+<html lang="zh-CN">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Dvnge视觉小说</title>
-    <link rel="stylesheet" href="css/样式.css">
+    <meta charset="UTF-8">
+    <title>Dvnge</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            outline: none;
+            -webkit-tap-highlight-color: transparent;
+            -ms-overflow-style: none;
+            transition: .3s;
+        }
+        
+        html, body {
+            height: 100dvh;
+            background: url('图片路径/你的背景图.png') center/cover no-repeat fixed;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+        }
+        
+        .控制组件 {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: flex-start;
+            padding-left: 10%;
+            color: #111;
+            background: linear-gradient(to right, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0) 100%);
+        }
+        
+        h1 {
+            margin: 0 0 2em 0;
+            font-size: 3em;
+            font-weight: 400;
+        }
+        
+        button {
+            margin: .35em 0;
+            font-size: 1.3em;
+            font-weight: 300;
+            color: #111;
+            text-decoration: none;
+            border: none;
+            background: none;
+        }
+        
+        button:hover {
+            font-weight: 600;
+        }
+        
+        #读档弹层 {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity .3s ease;
+            z-index: 200;
+        }
+        
+        #读档弹层.显示 {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        
+        .读档卡片 {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 4px;
+            padding: 30px 40px;
+            border: 1px solid #DDDDDD;
+            max-width: 400px;
+            width: 90%;
+            position: relative;
+        }
+        
+        .关闭按钮 {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 24px;
+            cursor: pointer;
+            color: #111;
+        }
+        
+        .存档位 {
+            margin: 10px 0;
+            padding: 10px 15px;
+            background: #f7f7f7;
+            border: 1px solid #DDDDDD;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background .2s;
+        }
+        
+        .存档位:hover {
+            background: #EEEEEE;
+        }
+        
+        .存档位.empty {
+            opacity: .4;
+            cursor : default;
+        }
+        
+        .存档位.empty:hover {
+            background: rgba(0, 0, 0, 0.05);
+        }
+        
+        @media (min-width: 1028px) {
+            h1 {
+                font-size: 6em;
+            }
+            
+            a {
+                font-size: 2em;
+            }
+        }
+    </style>
 </head>
-
 <body>
-    <!-- 标题容器 -->
-    <div id="标题容器" class="标题容器 隐藏"></div>
-    <!-- 立绘容器 -->
-    <img id="左立绘" class="立绘">
-    <img id="中立绘" class="立绘">
-    <img id="右立绘" class="立绘">
-    <!-- 主界面 -->
-    <div class="主容器">
-        <div id="对话框容器">
-            <div class="角色"></div>
-            <div class="内容"></div>
-            <div class="选项容器"></div>
+    <div class="控制组件">
+        <h1>Game Title</h1>
+        <nav>
+            <button onclick="window.location.href='game.html'">开始游戏</button><br>
+            <button href="#load" id="load">读取存档</button>
+        </nav>
+    </div>
+    
+    <!-- 读档弹层 -->
+    <div id="读档弹层">
+        <div class="读档卡片">
+            <span class="关闭按钮">×</span>
+            <h3 style="margin-bottom: 15px;">读取存档</h3>
+            
+            <!-- 自动存档 -->
+            <div class="存档位" id="自动存档">
+                <strong>自动存档</strong>
+                <p class="概要">无数据</p>
+            </div>
+            
+            <!-- 2 个手动档 -->
+            <div class="存档位" data-slot="1">
+                <strong>存档位 1</strong>
+                <p class="概要">空存档</p>
+            </div>
+            <div class="存档位" data-slot="2">
+                <strong>存档位 2</strong>
+                <p class="概要">空存档</p>
+            </div>
         </div>
     </div>
-    <!-- 存档按钮 -->
-    <button class="存档按钮" onclick="打开存档界面()">
-        <svg width="24" height="24" viewBox="0 0 448 512" xmlns="http://www.w3.org/2000/svg"><path fill="currentColor" d="M64 32C28.7 32 0 60.7 0 96L0 416c0 35.3 28.7 64 64 64l320 0c35.3 0 64-28.7 64-64l0-242.7c0-17-6.7-33.3-18.7-45.3L352 50.7C340 38.7 323.7 32 306.7 32L64 32zm32 96c0-17.7 14.3-32 32-32l160 0c17.7 0 32 14.3 32 32l0 64c0 17.7-14.3 32-32 32l-160 0c-17.7 0-32-14.3-32-32l0-64zM224 288a64 64 0 1 1 0 128 64 64 0 1 1 0-128z"/></svg>
-    </button>
-    <button class="自定义按钮" onclick="自定义按钮功能()">
-        <svg width="24" height="24" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16"><path d="M7.53 1.282a.5.5 0 0 1 .94 0l.478 1.306a7.492 7.492 0 0 0 4.464 4.464l1.305.478a.5.5 0 0 1 0 .94l-1.305.478a7.492 7.492 0 0 0-4.464 4.464l-.478 1.305a.5.5 0 0 1-.94 0l-.478-1.305a7.492 7.492 0 0 0-4.464-4.464L1.282 8.47a.5.5 0 0 1 0-.94l1.306-.478a7.492 7.492 0 0 0 4.464-4.464Z"/></svg>
-    </button>
-    <!-- 存档界面 -->
-    <div id="存档界面" class="隐藏">
-        <div class="标题">存档管理</div>
-        <div class="存档列表">
-            <!-- 自动存档项 -->
-            <div class="存档项" data-slot="auto"></div>
-            <!-- 手动存档项 -->
-            <div class="存档项" data-slot="1" onclick="保存存档(1)"></div>
-            <div class="存档项" data-slot="2" onclick="保存存档(2)"></div>
-        </div>
-        <button class="关闭按钮" onclick="关闭存档界面()">×</button>
-    </div>
-    <!-- 音乐播放器 -->
-    <audio id="背景音乐" class="隐藏"></audio>
-    <!-- 章节加载（每新建一个章节就要在章节库中增加） -->
-    <script src="js/章节/序章.js"></script>
-    <script src="js/TTQ视觉小说引擎.js"></script>
-    <script src="js/自定义功能.js"></script>
+    
+    <script>
+        function 跳转到游戏(slot) {
+            location.href = 'game.html?存档=' + slot;
+        }
+        
+        function 加载读档面板() {
+            // 自动存档
+            const auto = localStorage.getItem('自动存档');
+            const autoBlock = document.getElementById('自动存档');
+            if (auto) {
+                try {
+                    const d = JSON.parse(auto);
+                    autoBlock.querySelector('.概要').textContent = `${d.章节 || '未知'} · ${d.时间 || '未知'}`;
+                    autoBlock.classList.remove('empty');
+                    autoBlock.onclick = () => 跳转到游戏('auto');
+                } catch {
+                    autoBlock.querySelector('.概要').textContent = '数据损坏';
+                    autoBlock.onclick = () => {};
+                }
+            } else {
+                autoBlock.classList.add('empty');
+                autoBlock.querySelector('.概要').textContent = '无数据';
+                autoBlock.onclick = () => {};
+            }
+            
+            // 手动档
+            for (let i = 1; i <= 2; i++) {
+                const key = `手动存档_${i}`;
+                const data = localStorage.getItem(key);
+                const slot = document.querySelector(`.存档位[data-slot="${i}"]`);
+                if (data) {
+                    try {
+                        const d = JSON.parse(data);
+                        slot.classList.remove('empty');
+                        slot.querySelector('.概要').textContent = `${d.章节 || '未知'} · ${d.时间 || '未知'}`;
+                        slot.onclick = () => 跳转到游戏(i);
+                    } catch {
+                        slot.querySelector('.概要').textContent = '数据损坏';
+                        slot.onclick = () => {};
+                    }
+                } else {
+                    slot.classList.add('empty');
+                    slot.querySelector('.概要').textContent = '空存档';
+                    slot.onclick = () => {};
+                }
+            }
+        }
+        
+        function 开关读层(show) {
+            const layer = document.getElementById('读档弹层');
+            if (show) {
+                加载读档面板();
+                layer.classList.add('显示');
+            } else {
+                layer.classList.remove('显示');
+            }
+        }
+        
+        /* 事件绑定 */
+        document.getElementById('load').addEventListener('click', () => 开关读层(true));
+        document.querySelector('.关闭按钮').addEventListener('click', () => 开关读层(false));
+    </script>
 </body>
-
 </html>

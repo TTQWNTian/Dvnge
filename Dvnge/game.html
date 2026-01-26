@@ -1,0 +1,55 @@
+<!-- TTQ视觉小说引擎v1.2.1 -->
+<!-- index.html -->
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dvnge视觉小说</title>
+    <link rel="stylesheet" href="css/样式.css">
+</head>
+
+<body>
+    <!-- 标题容器 -->
+    <div id="标题容器" class="标题容器 隐藏"></div>
+    <!-- 立绘容器 -->
+    <img id="左立绘" class="立绘">
+    <img id="中立绘" class="立绘">
+    <img id="右立绘" class="立绘">
+    <!-- 主界面 -->
+    <div class="主容器">
+        <div id="对话框容器">
+            <div class="角色"></div>
+            <div class="内容"></div>
+            <div class="选项容器"></div>
+        </div>
+    </div>
+    <!-- 存档按钮 -->
+    <button class="存档按钮" onclick="打开存档界面()">
+        <svg width="24" height="24" viewBox="0 0 448 512" xmlns="http://www.w3.org/2000/svg"><path fill="currentColor" d="M64 32C28.7 32 0 60.7 0 96L0 416c0 35.3 28.7 64 64 64l320 0c35.3 0 64-28.7 64-64l0-242.7c0-17-6.7-33.3-18.7-45.3L352 50.7C340 38.7 323.7 32 306.7 32L64 32zm32 96c0-17.7 14.3-32 32-32l160 0c17.7 0 32 14.3 32 32l0 64c0 17.7-14.3 32-32 32l-160 0c-17.7 0-32-14.3-32-32l0-64zM224 288a64 64 0 1 1 0 128 64 64 0 1 1 0-128z"/></svg>
+    </button>
+    <button class="自定义按钮" onclick="自定义按钮功能()">
+        <svg width="24" height="24" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16"><path d="M7.53 1.282a.5.5 0 0 1 .94 0l.478 1.306a7.492 7.492 0 0 0 4.464 4.464l1.305.478a.5.5 0 0 1 0 .94l-1.305.478a7.492 7.492 0 0 0-4.464 4.464l-.478 1.305a.5.5 0 0 1-.94 0l-.478-1.305a7.492 7.492 0 0 0-4.464-4.464L1.282 8.47a.5.5 0 0 1 0-.94l1.306-.478a7.492 7.492 0 0 0 4.464-4.464Z"/></svg>
+    </button>
+    <!-- 存档界面 -->
+    <div id="存档界面" class="隐藏">
+        <div class="标题">存档管理</div>
+        <div class="存档列表">
+            <!-- 自动存档项 -->
+            <div class="存档项" data-slot="auto"></div>
+            <!-- 手动存档项 -->
+            <div class="存档项" data-slot="1" onclick="保存存档(1)"></div>
+            <div class="存档项" data-slot="2" onclick="保存存档(2)"></div>
+        </div>
+        <button class="关闭按钮" onclick="关闭存档界面()">×</button>
+    </div>
+    <!-- 音乐播放器 -->
+    <audio id="背景音乐" class="隐藏"></audio>
+    <!-- 章节加载（每新建一个章节就要在章节库中增加） -->
+    <script src="js/章节/序章.js"></script>
+    <script src="js/TTQ视觉小说引擎.js"></script>
+    <script src="js/自定义功能.js"></script>
+</body>
+
+</html>
