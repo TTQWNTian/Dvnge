@@ -138,6 +138,21 @@ body {
     pointer-events: auto;
 }
 
+/* 返回按钮样式 */
+.返回按钮 {
+    position: fixed;
+    top: 0;
+    left: 0;
+    padding: 12px;
+    font-size: 1.2em;
+    background: transparent;
+    border: none;
+    color: #fff;
+    z-index: 102;
+    cursor: pointer;
+    pointer-events: auto;
+}
+
 .自定义按钮 {
     position: fixed;
     top: 0;
