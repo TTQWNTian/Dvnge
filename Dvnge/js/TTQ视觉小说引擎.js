@@ -1,5 +1,5 @@
 // TTQ视觉小说引擎.js
-// 版本: v1.3.2
+// 版本: v1.4.0
 // 版本命名遵循语义化版本 vX.Y.Z (X-不兼容之前版本的大更新，Y-功能更新，Z-补丁)
 // 开发者: Tian
 // ⚠️对js不熟的不要动这个文件
@@ -26,8 +26,13 @@ const 初始状态 = {
     标题: {
         显示: false,
         内容: "",
-        位置: "上中",
+        位置: "上",
         样式: {}
+    },
+    头像: {
+        显示: false,
+        路径: "",
+        位置: "左"
     },
     左立绘: {
         显示: false,
@@ -159,6 +164,12 @@ function 切换章节(新章节名称, 起始索引 = 0, 选项 = {}) {
     if (当前状态.音乐) {
         播放器.pause();
         播放器.src = '';
+    }
+
+    // 移除头像容器
+    const 旧头像容器 = document.getElementById('对话框头像容器');
+    if (旧头像容器) {
+        旧头像容器.remove();
     }
 
     当前状态 = {
@@ -858,6 +869,53 @@ function 更新场景(当前节点) {
         解锁CG(节点.解锁CG.名称, 节点.解锁CG.路径);
     }
 
+    // 头像系统
+    const 左边容器 = document.getElementById('左边头像容器');
+    const 右边容器 = document.getElementById('右边头像容器');
+    左边容器.classList.add('隐藏');
+    右边容器.classList.add('隐藏');
+    左边容器.innerHTML = '';
+    右边容器.innerHTML = '';
+
+    if (节点.头像) {
+        // 如果节点.头像是一个字符串，转换为对象格式
+        let 节点头像 = typeof 节点.头像 === 'string' ? { 路径: 节点.头像, 位置: '左' } : 节点.头像;
+
+        if (节点头像.路径) {
+            let 头像路径 = 节点头像.路径;
+            // 解析变量
+            头像路径 = 头像路径.replace(/{([^}]+)}/g, (匹配, 变量名) => {
+                const 变量路径 = 变量名.trim().split('.');
+                let 值 = 当前状态.用户变量;
+                try {
+                    变量路径.forEach(段 => 值 = 值[段]);
+                    return 值 || '';
+                } catch {
+                    return '';
+                }
+            });
+
+            // 根据位置选择对应的头像容器
+            const 头像位置 = 节点头像.位置 || '左';
+            const 目标容器 = 头像位置 === '左' ? 左边容器 : 右边容器;
+
+            // 显示对应的容器
+            目标容器.classList.remove('隐藏');
+
+            // 创建图片元素
+            const 图片元素 = document.createElement('img');
+            图片元素.src = 头像路径;
+            目标容器.appendChild(图片元素);
+
+            当前状态.头像.显示 = true;
+            当前状态.头像.路径 = 节点头像.路径;
+            当前状态.头像.位置 = 头像位置;
+        }
+    } else if (节点.头像 === null) {
+        当前状态.头像.显示 = false;
+        当前状态.头像.路径 = "";
+    }
+
     // 对话框系统
     const 容器 = document.getElementById('对话框容器');
     if (容器) {
@@ -936,7 +994,7 @@ function 更新场景(当前节点) {
                     选项按钮.className = '选项按钮';
                     选项按钮.textContent = 选项.文本 || '选项';
 
-                    选项按钮.addEventListener('click', function (e) {
+                    选项按钮.addEventListener('click', function(e) {
                         e.stopPropagation();
                         e.preventDefault();
                         选项容器.querySelectorAll('.选项按钮').forEach(btn => {
@@ -1030,7 +1088,7 @@ function 更新场景(当前节点) {
             继续剧情();
         };
 
-        确认按钮.addEventListener('click', function (e) {
+        确认按钮.addEventListener('click', function(e) {
             e.stopPropagation();
             处理确认();
         });
@@ -1091,7 +1149,7 @@ function 处理选项点击(选项) {
         const 安全作用域 = {
             vars: 用户变量,
             Math: Math,
-            getVar: function (path) {
+            getVar: function(path) {
                 return path.split('.').reduce((obj, key) => obj?.[key], 用户变量);
             }
         };
@@ -1186,6 +1244,12 @@ function 生成存档快照() {
             位置: 当前状态.标题.位置,
             样式: 当前状态.标题.样式
         },
+        // 添加头像存档
+        头像: {
+            显示: 当前状态.头像.显示,
+            路径: 当前状态.头像.路径,
+            位置: 当前状态.头像.位置
+        },
         立绘: {
             左: {
                 ...当前状态.左立绘,
@@ -1217,6 +1281,12 @@ function 恢复存档状态(存档, 是否完全重置 = false) {
     }
 
     停止打字效果();
+
+    // 移除旧头像容器
+    const 旧头像容器 = document.getElementById('对话框头像容器');
+    if (旧头像容器) {
+        旧头像容器.remove();
+    }
 
     当前状态 = 是否完全重置 ? {
         ...JSON.parse(JSON.stringify(初始状态)),
@@ -1263,12 +1333,12 @@ function 恢复存档状态(存档, 是否完全重置 = false) {
         if (存档.标题.显示) {
             标题容器.textContent = 存档.标题.内容 || '';
 
-            const 位置类列表 = ['标题位置-上中', '标题位置-下中', '标题位置-左中', '标题位置-右中',
-                '标题位置-左上', '标题位置-左下', '标题位置-右上', '标题位置-右下', '标题位置-中中'
+            const 位置类列表 = ['标题位置-上', '标题位置-下', '标题位置-左', '标题位置-右',
+                '标题位置-左上', '标题位置-左下', '标题位置-右上', '标题位置-右下', '标题位置-中'
             ];
             位置类列表.forEach(类名 => 标题容器.classList.remove(类名));
 
-            标题容器.classList.add(`标题位置-${存档.标题.位置 || '上中'}`);
+            标题容器.classList.add(`标题位置-${存档.标题.位置 || '中'}`);
 
             if (存档.标题.样式) {
                 Object.entries(存档.标题.样式).forEach(([属性, 值]) => {
@@ -1314,6 +1384,28 @@ function 恢复存档状态(存档, 是否完全重置 = false) {
         元素.src = 存档数据.路径 || "";
         元素.style.opacity = 存档数据.显示 ? 1 : 0;
     });
+
+    if (存档.头像 && 存档.头像.显示 && 存档.头像.路径) {
+        当前状态.头像 = {
+            显示: 存档.头像.显示,
+            路径: 存档.头像.路径,
+            位置: 存档.头像.位置 || "左"
+        };
+
+        const 左边容器 = document.getElementById('左边头像容器');
+        const 右边容器 = document.getElementById('右边头像容器');
+        左边容器.classList.add('隐藏');
+        右边容器.classList.add('隐藏');
+        左边容器.innerHTML = '';
+        右边容器.innerHTML = '';
+
+        const 目标容器 = 当前状态.头像.位置 === '左' ? 左边容器 : 右边容器;
+        目标容器.classList.remove('隐藏');
+
+        const 图片元素 = document.createElement('img');
+        图片元素.src = 当前状态.头像.路径;
+        目标容器.appendChild(图片元素);
+    }
 
     const 播放器 = document.getElementById('背景音乐');
     if (当前状态.音乐) {
@@ -1534,6 +1626,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (背景视频 && 背景视频.dataset.目标音量) {
                 背景视频.muted = false;
                 背景视频.volume = 背景视频.dataset.目标音量;
+                if (背景视频.paused) 背景视频.play();
             }
 
             // 恢复所有立绘视频音量
@@ -1542,6 +1635,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (视频元素 && 视频元素.tagName === 'VIDEO' && 视频元素.dataset.目标音量) {
                     视频元素.muted = false;
                     视频元素.volume = 视频元素.dataset.目标音量;
+                    if (视频元素.paused) 视频元素.play();
                 }
             });
         }
