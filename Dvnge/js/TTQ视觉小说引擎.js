@@ -563,8 +563,8 @@ function 更新场景(当前节点) {
                 背景容器.style.background = '#000';
             }
             
-            document.body.style.background = 'none';
-            当前状态.背景 = 'none';
+            document.body.style.background = '#000';
+            当前状态.背景 = '#000';
         } else {
             let 背景值 = 节点.背景;
             背景值 = 背景值.replace(/{([^}]+)}/g, (匹配, 变量名) => {
@@ -596,6 +596,7 @@ function 更新场景(当前节点) {
                 const 视频元素 = document.createElement('video');
                 视频元素.id = '背景视频';
                 视频元素.src = 背景值;
+                视频元素.poster = '你的视频封面图片.png';
                 视频元素.style.position = 'fixed';
                 视频元素.style.top = '0';
                 视频元素.style.left = '0';
@@ -627,8 +628,8 @@ function 更新场景(当前节点) {
                 if (背景容器) {
                     背景容器.style.opacity = '0';
                 }
-                document.body.style.background = 'none';
-                当前状态.背景 = 'none';
+                document.body.style.background = '#000';
+                当前状态.背景 = '#000';
             } else {
                 // 图片背景
                 const 背景容器 = document.getElementById('背景容器');
@@ -754,6 +755,7 @@ function 更新场景(当前节点) {
                     视频元素.id = 位置;
                     视频元素.className = 元素.className;
                     视频元素.style.cssText = 元素.style.cssText;
+                    视频元素.poster = '你的视频封面图片.png';
                     
                     const 目标音量 = 当前状态[位置].媒体.音量 ?? 1;
                     视频元素.dataset.目标音量 = 目标音量;
