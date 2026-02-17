@@ -620,8 +620,8 @@ function 更新场景(当前节点) {
                 if (已有背景视频) 已有背景视频.remove();
                 
                 let 背景图 = 背景值;
-                if (!背景值.startsWith('#') && !背景值.startsWith('rgb') && !背景值.includes('url(')) {
-                    背景图 = `url('${背景值}') center/cover`;
+                if (背景值.includes('.') || 背景值.includes('/')) {
+                  背景图 = `url('${背景值}') center/cover`;
                 }
                 document.body.style.background = 背景图;
                 当前状态.背景 = 背景图;
