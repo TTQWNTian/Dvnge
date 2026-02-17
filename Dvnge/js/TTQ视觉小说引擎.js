@@ -1,5 +1,5 @@
 // TTQ视觉小说引擎.js
-// 版本: v1.4.0
+// 版本: v1.4.1
 // 版本命名遵循语义化版本 vX.Y.Z (X-不兼容之前版本的大更新，Y-功能更新，Z-补丁)
 // 开发者: Tian
 // ⚠️对js不熟的不要动这个文件
@@ -554,6 +554,15 @@ function 更新场景(当前节点) {
         if (节点.背景 === null) {
             const 背景视频元素 = document.getElementById('背景视频');
             if (背景视频元素) 背景视频元素.remove();
+            
+            // 使用背景容器
+            const 背景容器 = document.getElementById('背景容器');
+            if (背景容器) {
+                // 渐出背景
+                背景容器.style.opacity = '0';
+                背景容器.style.background = '#000';
+            }
+            
             document.body.style.background = 'none';
             当前状态.背景 = 'none';
         } else {
@@ -580,6 +589,7 @@ function 更新场景(当前节点) {
             const 文件扩展名 = 背景值.split('.').pop().toLowerCase();
             
             if (视频扩展名.includes(文件扩展名)) {
+                // 视频背景
                 const 已有背景视频 = document.getElementById('背景视频');
                 if (已有背景视频) 已有背景视频.remove();
                 
@@ -613,18 +623,39 @@ function 更新场景(当前节点) {
                 
                 控制视频播放(视频元素, 当前状态.背景媒体);
                 
+                const 背景容器 = document.getElementById('背景容器');
+                if (背景容器) {
+                    背景容器.style.opacity = '0';
+                }
                 document.body.style.background = 'none';
                 当前状态.背景 = 'none';
             } else {
-                const 已有背景视频 = document.getElementById('背景视频');
-                if (已有背景视频) 已有背景视频.remove();
+                // 图片背景
+                const 背景容器 = document.getElementById('背景容器');
+                if (!背景容器) return;
                 
                 let 背景图 = 背景值;
                 if (背景值.includes('.') || 背景值.includes('/')) {
-                  背景图 = `url('${背景值}') center/cover`;
+                    背景图 = `url('${背景值}') center/cover`;
                 }
-                document.body.style.background = 背景图;
+                const 当前背景 = 背景容器.style.background;
+                if (当前背景 === 背景图) {
+                    return;
+                }
+                const 已有背景视频 = document.getElementById('背景视频');
+                if (已有背景视频) 已有背景视频.remove();
+                背景容器.style.opacity = '0';
+                
+                // 等待渐出动画完成后再设置新背景并渐入
+                setTimeout(() => {
+                    背景容器.style.background = 背景图;
+                    // 强制重绘
+                    void 背景容器.offsetHeight;
+                    背景容器.style.opacity = '1';
+                }, 300);
+                
                 当前状态.背景 = 背景图;
+                document.body.style.background = '#000';
             }
         }
     }

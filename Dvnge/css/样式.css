@@ -1,4 +1,4 @@
-/* TTQ视觉小说引擎v1.4.0 */
+/* TTQ视觉小说引擎v1.4.1 */
 /* css/样式.css */
 /* 基础样式 */
 
@@ -20,7 +20,19 @@ body {
     cursor: pointer;
     background-size: cover;
     background-position: center;
-    transition: background-image 0.5s;
+}
+
+.背景容器 {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    transition: opacity 0.3s ease;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
 }
 
 .主容器 {
