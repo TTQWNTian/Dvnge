@@ -1,5 +1,5 @@
 // TTQ视觉小说引擎.js
-// 版本: v1.4.1-dev
+// 版本: v1.5.0-dev
 // 版本命名遵循语义化版本 vX.Y.Z (X-不兼容之前版本的大更新，Y-功能更新，Z-补丁)
 // 开发者: Tian
 // ⚠️对js不熟的不要动这个文件
@@ -1295,6 +1295,15 @@ function 更新场景(当前节点) {
         输入容器.appendChild(输入框);
         输入容器.appendChild(确认按钮);
         容器.querySelector('.选项容器').appendChild(输入容器);
+    }
+
+    // 自定义功能
+    if (节点.自定义功能) {
+        try {
+            eval(节点.自定义功能);
+        } catch (e) {
+            console.error('自定义功能错误:', e);
+        }
     }
 }
 
