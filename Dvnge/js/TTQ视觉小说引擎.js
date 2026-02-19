@@ -1008,7 +1008,7 @@ function 更新场景(当前节点) {
                 区域元素.style.width = 区域.宽度 + 'px';
                 区域元素.style.height = 区域.高度 + 'px';
                 区域元素.style.pointerEvents = 'auto';
-                区域元素.style.cursor = 'pointer';
+                区域元素.style.cursor = 调查设置.光标 || 'pointer';
                 
                 if (区域.贴图) {
                     const 贴图 = document.createElement('img');
@@ -1019,7 +1019,7 @@ function 更新场景(当前节点) {
                     区域元素.appendChild(贴图);
                 }
                 
-                // 确保区域元素和贴图都使用同一个光标样式
+                // 区域元素光标样式
                 区域元素.style.cursor = 调查设置.光标 || 'pointer';
                 
                 区域元素.addEventListener('click', (e) => {
