@@ -1919,4 +1919,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     document.addEventListener('click', 处理全局点击);
+    // 禁止右键菜单
+    document.addEventListener('contextmenu', (e) => e.preventDefault());
 });
