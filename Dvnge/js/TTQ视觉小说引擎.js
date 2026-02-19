@@ -1296,7 +1296,7 @@ function 更新场景(当前节点) {
         输入容器.appendChild(确认按钮);
         容器.querySelector('.选项容器').appendChild(输入容器);
     }
-
+    
     // 自定义功能
     if (节点.自定义功能) {
         try {
@@ -1817,6 +1817,22 @@ function 处理全局点击(e) {
     
     const 当前章节数据 = 章节库[当前状态.当前章节];
     if (!当前章节数据) return;
+    
+    const 当前节点 = 当前章节数据[当前状态.当前索引];
+    if (!当前节点) return;
+    
+    if (当前节点.选项?.length > 0) {
+        return;
+    }
+    
+    if (当前节点.输入) {
+        return;
+    }
+    
+    const 正在打字 = document.querySelector('.内容')?.dataset.正在打字 === 'true';
+    if (正在打字) {
+        return;
+    }
     
     if (当前状态.当前索引 < 当前章节数据.length) {
         当前状态.当前索引++;
