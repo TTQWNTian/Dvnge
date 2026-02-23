@@ -413,9 +413,7 @@ function 停止打字效果() {
     const 内容元素 = document.querySelector('.内容');
     if (内容元素 && 内容元素.dataset.正在打字 === 'true') {
         const 完整内容 = 内容元素.dataset.完整内容 || '';
-        内容元素.innerHTML = 完整内容
-            .replace(/\[b\](.*?)\[\/b\]/g, '<strong>$1</strong>')
-            .replace(/\[i\](.*?)\[\/i\]/g, '<em>$1</em>');
+        内容元素.innerHTML = 完整内容;
         内容元素.dataset.正在打字 = 'false';
     }
 }
@@ -1135,7 +1133,7 @@ function 更新场景(当前节点) {
                 }
             });
             
-            角色元素.textContent = 处理后的角色;
+            角色元素.innerHTML = 处理后的角色;
             角色元素.style.display = 处理后的角色 ? 'block' : 'none';
             
             const 内容元素 = 容器.querySelector('.内容');
@@ -1165,9 +1163,7 @@ function 更新场景(当前节点) {
                     逐字速度
                 );
             } else {
-                内容元素.innerHTML = 处理后的内容
-                    .replace(/\[b\](.*?)\[\/b\]/g, '<strong>$1</strong>')
-                    .replace(/\[i\](.*?)\[\/i\]/g, '<em>$1</em>');
+                内容元素.innerHTML = 处理后的内容;
                 
                 if (!节点.选项?.length && !节点.输入) {
                     if (!节点.自动节点 || 节点.自动节点 <= 0) {
