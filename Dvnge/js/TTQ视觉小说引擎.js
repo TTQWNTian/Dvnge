@@ -1110,11 +1110,12 @@ function 更新场景(当前节点) {
     if (容器) {
         const 有对话内容 = 节点.角色 || 节点.内容;
         const 有选项 = 节点.选项?.length > 0;
+        const 有输入框 = 节点.输入;
         
         容器.style.animation = 'none';
         void 容器.offsetHeight;
         
-        if (有对话内容 || 有选项) {
+        if (有对话内容 || 有选项 || 有输入框) {
             容器.style.display = 'block';
             
             const 角色元素 = 容器.querySelector('.角色');
