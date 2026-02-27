@@ -468,9 +468,26 @@ function 开始快进() {
 function 切换快进模式() {
     当前状态.快进模式 = !当前状态.快进模式;
     const 快进按钮 = document.getElementById('快进按钮');
+    
     if (当前状态.快进模式) {
         开始快进();
         if (快进按钮) 快进按钮.classList.add('激活');
+        
+        // 添加全局点击监听，点击时关闭快进
+        document.addEventListener('click', function 关闭快进(e) {
+            // 排除点击快进按钮本身（避免点击快进按钮开启后又立即关闭）
+            if (e.target.closest('#快进按钮')) {
+                return;
+            }
+            
+            // 关闭快进
+            停止快进();
+            当前状态.快进模式 = false;
+            if (快进按钮) 快进按钮.classList.remove('激活');
+            
+            document.removeEventListener('click', 关闭快进);
+        });
+        
     } else {
         停止快进();
         if (快进按钮) 快进按钮.classList.remove('激活');
@@ -1863,6 +1880,8 @@ function 加载指定存档(存档标识) {
 
 function 打开存档界面(e) {
     e?.stopPropagation();
+    
+    停止快进();
     
     更新存档显示('auto');
     
