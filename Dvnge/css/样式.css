@@ -1,4 +1,4 @@
-/* TTQ视觉小说引擎v1.5.1 */
+/* TTQ视觉小说引擎v1.6.0-dev */
 /* css/样式.css */
 /* 基础样式 */
 
@@ -433,4 +433,28 @@ body {
 
 .标题退出 {
     animation: 标题退出 0.2s ease forwards;
+}
+
+#工具栏 {
+    position: absolute;
+    top: -30px;
+    right: 0;
+    z-index: 101;
+    pointer-events: auto;
+}
+
+#快进按钮 {
+    background: none;
+    border: 1px solid #889900;
+    color: #889900;
+    padding: 2px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9em;
+    pointer-events: auto;
+    z-index: 102;
+}
+
+#快进按钮.激活 {
+    background: rgba(136, 153, 0, 0.5);
 }
