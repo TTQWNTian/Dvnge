@@ -435,7 +435,7 @@ body {
     animation: 标题退出 0.2s ease forwards;
 }
 
-#工具栏 {
+#功能栏 {
     position: absolute;
     top: -30px;
     right: 0;
