@@ -5,6 +5,9 @@
 
 ---
 
+![Game Run_pc](https://dvnge.ttqwn.top/assets/img/gamerun_pc.png)
+![Game Run](https://dvnge.ttqwn.top/assets/img/gamerun.png)
+
 ## 使用须知
 
 > [!CAUTION]
