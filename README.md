@@ -5,8 +5,8 @@
 
 ---
 
-![Game Run_pc](https://dvnge.ttqwn.top/assets/img/gamerun_pc.png)
-![Game Run](https://dvnge.ttqwn.top/assets/img/gamerun.png)
+![Game Run_pc](.github/img/gamerun_pc.png)
+![Game Run](.github/img/gamerun.png)
 
 ## 使用须知
 
