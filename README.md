@@ -5,8 +5,8 @@
 
 ---
 
-![Game Run_pc](.github/img/gamerun_pc.png)
-![Game Run](.github/img/gamerun.png)
+![Game Run_pc](./assets/img/gamerun_pc.png)
+![Game Run](./assets/img/gamerun.png)
 
 ## 使用须知
 
