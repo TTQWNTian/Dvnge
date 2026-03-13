@@ -434,7 +434,7 @@ function 开始快进() {
         return;
     }
     停止快进();
-
+    
     const 当前章节数据 = 章节库[当前状态.当前章节];
     if (!当前章节数据) {
         return;
@@ -443,10 +443,10 @@ function 开始快进() {
     if (!当前节点) {
         return;
     }
-
+    
     // 判断是否有交互：选项、输入框、调查模式
     const 有交互 = !!(当前节点.选项?.length) || !!(当前节点.输入) || !!(当前节点.调查);
-
+    
     if (!有交互) {
         // 无交互，自动快进
         当前状态.快进定时器 = setTimeout(() => {
@@ -1250,17 +1250,44 @@ function 更新场景(当前节点) {
             选项容器.innerHTML = '';
             
             if (有选项) {
-                节点.选项.forEach(选项 => {
+                // 获取已选选项记录
+                const 已选记录 = JSON.parse(localStorage.getItem('已选选项记录') || '{}');
+                
+                节点.选项.forEach((选项, 索引) => {
                     const 选项按钮 = document.createElement('div');
                     选项按钮.className = '选项按钮';
                     选项按钮.textContent = 选项.文本 || '选项';
                     
+                    // 创建唯一标识符来记录选项是否被选过
+                    const 选项标识 = `${当前状态.当前章节}_${当前状态.当前索引}_${索引}`;
+                    
+                    // 检查这个选项是否已经被选过，如果是则添加已选样式
+                    if (已选记录[选项标识]) {
+                        选项按钮.classList.add('已选');
+                    }
+                    
                     选项按钮.addEventListener('click', function(e) {
                         e.stopPropagation();
                         e.preventDefault();
+                        
+                        // 记录该选项已被选择
+                        if (!已选记录[选项标识]) {
+                            已选记录[选项标识] = {
+                                时间: new Date().toLocaleString(),
+                                章节: 当前状态.当前章节,
+                                索引: 当前状态.当前索引,
+                                选项文本: 选项.文本
+                            };
+                            localStorage.setItem('已选选项记录', JSON.stringify(已选记录));
+                            
+                            this.classList.add('已选');
+                        }
+                        
+                        // 移除所有选项按钮的点击事件监听
                         选项容器.querySelectorAll('.选项按钮').forEach(btn => {
                             btn.removeEventListener('click', this);
                         });
+                        
                         处理选项点击(选项);
                     });
                     
@@ -1490,7 +1517,7 @@ function 继续剧情() {
     
     if (当前状态.当前索引 < 当前章节数据.length) {
         更新场景(当前章节数据[当前状态.当前索引]);
-
+        
         // 快进模式检查：如果当前节点无交互，启动下一次快进
         if (当前状态.快进模式) {
             const 当前节点 = 当前章节数据[当前状态.当前索引];

@@ -114,6 +114,14 @@ body {
     background: rgba(255, 255, 255, 0.2);
 }
 
+.选项按钮.已选 {
+    opacity: 0.6;
+}
+
+.选项按钮.已选:hover {
+    opacity: 0.8;
+}
+
 /* 立绘样式 */
 .立绘 {
     position: fixed;
