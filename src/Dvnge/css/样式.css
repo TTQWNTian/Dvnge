@@ -1,4 +1,4 @@
-/* TTQ视觉小说引擎v1.6.0-dev */
+/* TTQ视觉小说引擎v1.6.0 */
 /* css/样式.css */
 /* 基础样式 */
 
@@ -461,4 +461,21 @@ body {
 
 #快进按钮.激活 {
     background: rgba(136, 153, 0, 0.5);
+}
+
+.存档操作栏 {
+    position: fixed;
+    right: 20px;
+    display: flex;
+    gap: 10px;
+    z-index: 201;
+}
+
+.存档操作按钮 {
+    background: none;
+    border: 1px solid #889900;
+    color: #889900;
+    padding: 6px 10px;
+    border-radius: 4px;
+    cursor: pointer;
 }
