@@ -80,7 +80,7 @@ const 初始状态 = {
         启用: false,
         路径: "",
         音量: 1,
-        播放间隔: 0,
+        间隔字符数: 1,
         当前音效对象: null
     }
 };
@@ -273,9 +273,13 @@ function 开始逐字显示(内容元素, 完整文本, 速度) {
     
     let 打字音效对象 = null;
     if (当前状态.打字音效.启用 && 当前状态.打字音效.路径) {
-        打字音效对象 = new Audio(当前状态.打字音效.路径);
+        if (!当前状态.打字音效.当前音效对象) {
+            当前状态.打字音效.当前音效对象 = new Audio(当前状态.打字音效.路径);
+            当前状态.打字音效.当前音效对象.volume = 当前状态.打字音效.音量;
+            当前状态.打字音效.当前音效对象.load();
+        }
+        打字音效对象 = 当前状态.打字音效.当前音效对象;
         打字音效对象.volume = 当前状态.打字音效.音量;
-        打字音效对象.load();
     }
     
     const 临时容器 = document.createElement('div');
@@ -367,13 +371,19 @@ function 开始逐字显示(内容元素, 完整文本, 速度) {
     let 当前索引 = 0;
     let 当前HTML = '';
     const 标签堆栈 = [];
-    let 上次音效播放时间 = 0;
+    let 字符计数 = 1;
     
     const 打字函数 = () => {
         if (当前索引 >= 显示结构.length) {
             内容元素.innerHTML = 完整文本;
             内容元素.dataset.正在打字 = 'false';
             当前状态.逐字显示.打字已完成 = true;
+            
+            // 打字结束时停止音效
+            if (当前状态.打字音效.当前音效对象) {
+                当前状态.打字音效.当前音效对象.pause();
+                当前状态.打字音效.当前音效对象.currentTime = 0;
+            }
             
             if (当前状态.逐字显示.打字定时器) {
                 clearTimeout(当前状态.逐字显示.打字定时器);
@@ -399,17 +409,14 @@ function 开始逐字显示(内容元素, 完整文本, 速度) {
                 当前HTML += 当前单元.内容;
                 
                 if (当前状态.打字音效.启用 && 打字音效对象) {
-                    const 当前时间 = Date.now();
-                    if (当前时间 - 上次音效播放时间 >= 当前状态.打字音效.播放间隔 * 1000) {
-                        上次音效播放时间 = 当前时间;
-                        const 音效副本 = 打字音效对象.cloneNode();
-                        音效副本.volume = 当前状态.打字音效.音量;
-                        音效副本.play().catch(e => console.log('打字音效播放失败:', e));
-                        音效副本.onended = () => {
-                            音效副本.remove();
-                        };
+                    const 间隔 = Math.max(1, 当前状态.打字音效.间隔字符数);
+                    if ((字符计数 - 1) % 间隔 === 0) {
+                        打字音效对象.pause();
+                        打字音效对象.currentTime = 0;
+                        打字音效对象.play().catch(e => console.log('打字音效播放失败:', e));
                     }
                 }
+                字符计数++;
             }
         } else if (当前单元.类型 === '标签') {
             当前HTML += 当前单元.内容;
@@ -476,17 +483,13 @@ function 开始快进() {
     const 有交互 = !!(当前节点.选项?.length) || !!(当前节点.输入) || !!(当前节点.调查);
     
     if (!有交互) {
-        // 无交互，自动快进
         当前状态.快进定时器 = setTimeout(() => {
             当前状态.快进定时器 = null;
             
-            // 检查是否是最后一个节点
             if (当前状态.当前索引 >= 当前章节数据.length - 1) {
-                // 最后一个节点，不再快进
                 return;
             }
             
-            // 先增加索引，再加载新节点（模拟点击行为）
             当前状态.当前索引++;
             继续剧情();
         }, 200); // 快进间隔
@@ -501,14 +504,11 @@ function 切换快进模式() {
         开始快进();
         if (快进按钮) 快进按钮.classList.add('激活');
         
-        // 添加全局点击监听，点击时关闭快进
         document.addEventListener('click', function 关闭快进(e) {
-            // 排除点击快进按钮本身（避免点击快进按钮开启后又立即关闭）
             if (e.target.closest('#快进按钮')) {
                 return;
             }
             
-            // 关闭快进
             停止快进();
             当前状态.快进模式 = false;
             if (快进按钮) 快进按钮.classList.remove('激活');
@@ -656,7 +656,7 @@ function 更新场景(当前节点) {
                 启用: false,
                 路径: "",
                 音量: 0.5,
-                播放间隔: 0.05,
+                间隔字符数: 1,
                 当前音效对象: null
             };
         } else {
@@ -678,7 +678,7 @@ function 更新场景(当前节点) {
                 启用: 打字音效设置.启用 !== undefined ? 打字音效设置.启用 : 当前状态.打字音效.启用,
                 路径: 音效路径 !== undefined ? 音效路径 : 当前状态.打字音效.路径,
                 音量: 打字音效设置.音量 !== undefined ? 打字音效设置.音量 : 当前状态.打字音效.音量,
-                播放间隔: 打字音效设置.播放间隔 !== undefined ? 打字音效设置.播放间隔 : 当前状态.打字音效.播放间隔,
+                间隔字符数: 打字音效设置.间隔字符数 !== undefined ? 打字音效设置.间隔字符数 : 当前状态.打字音效.间隔字符数,
                 当前音效对象: null
             };
         }
@@ -690,7 +690,6 @@ function 更新场景(当前节点) {
             const 背景视频元素 = document.getElementById('背景视频');
             if (背景视频元素) 背景视频元素.remove();
             
-            // 使用背景容器
             const 背景容器 = document.getElementById('背景容器');
             if (背景容器) {
                 // 渐出背景
@@ -1123,7 +1122,6 @@ function 更新场景(当前节点) {
         新调查层.style.zIndex = '101';
         新调查层.style.pointerEvents = 'auto';
         
-        // 调查层本身拦截点击但不做任何事
         新调查层.addEventListener('click', (e) => {
             e.stopPropagation();
         });
@@ -1165,7 +1163,6 @@ function 更新场景(当前节点) {
                     if (存档按钮) 存档按钮.classList.remove('隐藏');
                     if (返回按钮) 返回按钮.classList.add('隐藏');
                     
-                    // 恢复全局点击
                     document.addEventListener('click', 处理全局点击);
                     
                     const 目标 = 区域.目标;
@@ -1221,14 +1218,11 @@ function 更新场景(当前节点) {
                 }
             });
             
-            // 根据位置选择对应的头像容器
             const 头像位置 = 节点头像.位置 || '左';
             const 目标容器 = 头像位置 === '左' ? 左边容器 : 右边容器;
             
-            // 显示对应的容器
             目标容器.classList.remove('隐藏');
             
-            // 创建图片元素
             const 图片元素 = document.createElement('img');
             图片元素.src = 头像路径;
             目标容器.appendChild(图片元素);
@@ -1314,7 +1308,6 @@ function 更新场景(当前节点) {
             选项容器.innerHTML = '';
             
             if (有选项) {
-                // 获取已选选项记录
                 const 已选记录 = JSON.parse(localStorage.getItem('已选选项记录') || '{}');
                 
                 节点.选项.forEach((选项, 索引) => {
@@ -1322,10 +1315,8 @@ function 更新场景(当前节点) {
                     选项按钮.className = '选项按钮';
                     选项按钮.textContent = 选项.文本 || '选项';
                     
-                    // 创建唯一标识符来记录选项是否被选过
                     const 选项标识 = `${当前状态.当前章节}_${当前状态.当前索引}_${索引}`;
                     
-                    // 检查这个选项是否已经被选过，如果是则添加已选样式
                     if (已选记录[选项标识]) {
                         选项按钮.classList.add('已选');
                     }
@@ -1334,7 +1325,6 @@ function 更新场景(当前节点) {
                         e.stopPropagation();
                         e.preventDefault();
                         
-                        // 记录该选项已被选择
                         if (!已选记录[选项标识]) {
                             已选记录[选项标识] = {
                                 时间: new Date().toLocaleString(),
@@ -1347,7 +1337,6 @@ function 更新场景(当前节点) {
                             this.classList.add('已选');
                         }
                         
-                        // 移除所有选项按钮的点击事件监听
                         选项容器.querySelectorAll('.选项按钮').forEach(btn => {
                             btn.removeEventListener('click', this);
                         });
@@ -1575,7 +1564,7 @@ function 继续剧情() {
         try {
             当前状态.打字音效.当前音效对象.pause();
             当前状态.打字音效.当前音效对象 = null;
-        } catch(e) {}
+        } catch (e) {}
     }
     
     if (当前状态.自动节点定时器) {
@@ -1596,8 +1585,7 @@ function 继续剧情() {
             if (!有交互) {
                 开始快进();
             } else {
-                停止快进(); // 遇到交互则停止
-                // 遇到交互节点时关闭快进模式
+                停止快进();
                 当前状态.快进模式 = false;
                 const 快进按钮 = document.getElementById('快进按钮');
                 if (快进按钮) 快进按钮.classList.remove('激活');
@@ -1629,6 +1617,7 @@ function 生成存档快照() {
             位置: 当前状态.标题.位置,
             样式: 当前状态.标题.样式
         },
+        // 添加头像存档
         头像: {
             显示: 当前状态.头像.显示,
             路径: 当前状态.头像.路径,
@@ -1659,7 +1648,7 @@ function 生成存档快照() {
             启用: 当前状态.打字音效.启用,
             路径: 当前状态.打字音效.路径,
             音量: 当前状态.打字音效.音量,
-            播放间隔: 当前状态.打字音效.播放间隔
+            间隔字符数: 当前状态.打字音效.间隔字符数
         }
     };
 }
@@ -1674,18 +1663,15 @@ function 恢复存档状态(存档, 是否完全重置 = false) {
     停止快进();
     当前状态.快进模式 = false;
     
-    // 移除已有头像容器
     const 已有头像容器 = document.getElementById('对话框头像容器');
     if (已有头像容器) {
         已有头像容器.remove();
     }
     
-    // 清理调查层
     const 已有调查层 = document.getElementById('调查层');
     if (已有调查层) 已有调查层.remove();
     document.body.style.cursor = 'default';
     
-    // 恢复按钮状态
     const 存档按钮 = document.getElementById('存档按钮');
     const 返回按钮 = document.getElementById('返回按钮');
     if (存档按钮) 存档按钮.classList.remove('隐藏');
