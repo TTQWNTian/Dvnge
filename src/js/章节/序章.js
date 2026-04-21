@@ -1,4 +1,4 @@
-const 序章数据 = [
+var 序章数据 = [
     {
         角色: "Tian",
         内容: "HELLO"

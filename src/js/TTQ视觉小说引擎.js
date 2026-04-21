@@ -5,11 +5,16 @@
 
 'use strict';
 
-// ====================== 全局配置 ======================
-const 章节库 = {
-    "序章": typeof 序章数据 !== 'undefined' ? 序章数据 : []
-};
+// ====================== 章节库 ======================
+const 章节库 = {};
 
+// 章节文件列表
+const 章节文件列表 = [
+    { 名称: "序章", 路径: "js/章节/序章.js" }
+    // 后续添加更多章节：{ 名称: "第一章", 路径: "js/章节/第一章.js" }
+];
+
+// ====================== 全局配置 ======================
 const 初始状态 = {
     当前章节: "",
     当前索引: 0,
@@ -88,6 +93,40 @@ const 初始状态 = {
 let 当前状态 = JSON.parse(JSON.stringify(初始状态));
 let 全局音效 = [];
 let 用户已交互 = false;
+
+function 加载章节(章节名) {
+    return new Promise((resolve, reject) => {
+        if (章节库[章节名]) {
+            resolve(章节库[章节名]);
+            return;
+        }
+        
+        const 章节配置 = 章节文件列表.find(c => c.名称 === 章节名);
+        if (!章节配置) {
+            reject(new Error(`章节【${章节名}】未在章节文件列表中定义`));
+            return;
+        }
+        
+        const script = document.createElement('script');
+        script.src = 章节配置.路径;
+        script.onload = () => {
+            const 变量名 = `${章节名}数据`;
+            if (window[变量名]) {
+                章节库[章节名] = window[变量名];
+                resolve(章节库[章节名]);
+            } else {
+                reject(new Error(`章节【${章节名}】数据加载失败，未找到 window.${变量名}`));
+            }
+        };
+        script.onerror = () => reject(new Error(`章节【${章节名}】文件加载失败: ${章节配置.路径}`));
+        document.head.appendChild(script);
+    });
+}
+
+function 加载所有章节() {
+    const 任务列表 = 章节文件列表.map(c => 加载章节(c.名称));
+    return Promise.all(任务列表);
+}
 
 // ====================== 标签索引表 ======================
 function 建立标签表(章节数据) {
@@ -2032,20 +2071,15 @@ document.addEventListener('DOMContentLoaded', () => {
     初始化CG存储();
     从本地存储加载用户变量();
     
-    // 全局点击交互检测
     document.addEventListener('click', function 首次交互() {
         if (!用户已交互) {
             用户已交互 = true;
-            
-            // 恢复背景视频音量
             const 背景视频 = document.getElementById('背景视频');
             if (背景视频 && 背景视频.dataset.目标音量) {
                 背景视频.muted = false;
                 背景视频.volume = 背景视频.dataset.目标音量;
                 if (背景视频.paused) 背景视频.play();
             }
-            
-            // 恢复所有立绘视频音量
             ['左立绘', '中立绘', '右立绘'].forEach(位置 => {
                 const 视频元素 = document.getElementById(位置);
                 if (视频元素 && 视频元素.tagName === 'VIDEO' && 视频元素.dataset.目标音量) {
@@ -2069,43 +2103,41 @@ document.addEventListener('DOMContentLoaded', () => {
     const 索引参数 = 地址参数.get('索引');
     const 存档参数 = 地址参数.get('存档');
     
-    if (章节参数 && 索引参数) {
-        const 目标章节 = 章节库[章节参数];
-        const 目标索引 = parseInt(索引参数);
-        
-        if (目标章节 && !isNaN(目标索引) && 目标索引 >= 0 && 目标索引 < 目标章节.length) {
-            切换章节(章节参数, 目标索引);
-        } else {
-            console.error('无效的章节或索引参数');
-            if (章节库.序章?.length) {
-                切换章节('序章', 0);
-            } else {
-                document.body.innerHTML = `
-          <div style="padding:20px;color:red">
-            <h1>⚠️ 初始化失败</h1>
-            <p>章节或索引无效</p>
-          </div>`;
-            }
-        }
-    } else if (存档参数) {
-        加载指定存档(存档参数);
-    } else {
+    // 加载章节数据后再启动
+    async function 初始化引擎() {
         try {
-            if (章节库.序章?.length) {
-                切换章节('序章', 0);
+            await 加载所有章节();
+            
+            if (章节参数 && 索引参数) {
+                const 目标章节 = 章节库[章节参数];
+                const 目标索引 = parseInt(索引参数);
+                if (目标章节 && !isNaN(目标索引) && 目标索引 >= 0 && 目标索引 < 目标章节.length) {
+                    切换章节(章节参数, 目标索引);
+                } else {
+                    if (章节库.序章?.length) 切换章节('序章', 0);
+                }
+            } else if (存档参数) {
+                加载指定存档(存档参数);
             } else {
-                throw new Error("缺少开始章节数据");
+                if (章节库.序章?.length) {
+                    切换章节('序章', 0);
+                } else {
+                    throw new Error("缺少序章数据");
+                }
             }
         } catch (错误) {
+            console.error('初始化失败:', 错误);
             document.body.innerHTML = `
-        <div style="padding:20px;color:red">
-          <h1>⚠️ 初始化失败</h1>
-          <p>${错误.message}</p>
-        </div>`;
+                <div style="color:red;">
+                    <h1>⚠️ 初始化失败</h1>
+                    <p>${错误.message}</p>
+                    <button onclick="location.reload()">刷新重试</button>
+                </div>`;
         }
     }
     
+    初始化引擎();
+    
     document.addEventListener('click', 处理全局点击);
-    // 禁止右键菜单
     document.addEventListener('contextmenu', (e) => e.preventDefault());
 });
