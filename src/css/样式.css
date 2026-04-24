@@ -307,43 +307,6 @@ body {
     opacity: 0.8;
 }
 
-/* 动画关键帧 */
-@keyframes 对话框进入动画 {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-@keyframes 对话框退出动画 {
-    from {
-        opacity: 1;
-        transform: translateY(0);
-    }
-    
-    to {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-}
-
-@keyframes 提示浮现 {
-    from {
-        transform: translate(-50%, -10px);
-        opacity: 0;
-    }
-    
-    to {
-        transform: translate(-50%, 0);
-        opacity: 1;
-    }
-}
-
 /* 标题样式 */
 .标题容器 {
     position: fixed;
@@ -406,29 +369,6 @@ body {
     top: 45%;
     left: 0;
     right: 0;
-}
-
-/* 标题动画 */
-@keyframes 标题进入 {
-    from {
-        opacity: 0;
-        transform: scale(0.5);
-    }
-    
-    to {
-        opacity: 1;
-    }
-}
-
-@keyframes 标题退出 {
-    from {
-        opacity: 1;
-    }
-    
-    to {
-        opacity: 0;
-        transform: scale(0.9);
-    }
 }
 
 .标题进入 {
