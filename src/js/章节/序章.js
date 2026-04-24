@@ -4,7 +4,7 @@ var 序章 = [
         内容: "HELLO"
     },
     {
-        角色: "Tian",
+        角色: "Dvnge",
         内容: "WORLD"
     }
 ];
