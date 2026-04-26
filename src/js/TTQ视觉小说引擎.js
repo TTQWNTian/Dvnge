@@ -82,7 +82,7 @@ const 初始状态 = {
     快进定时器: null,
     打字音效: {
         启用: false,
-        路径: "",
+        路径: "assets/audio/sound/keydown.mp3",
         音量: 1,
         间隔字符数: 1,
         当前音效对象: null
@@ -1511,7 +1511,15 @@ function 更新场景(当前节点) {
             }
         } else {
             const 隐藏对话框 = () => {
-                容器.style.display = 'none';
+                // 检查当前是否有交互内容，如果有则不隐藏（快进中断了退出动画）
+                const 当前容器 = document.getElementById('对话框容器');
+                const 当前角色 = 当前容器.querySelector('.角色')?.textContent;
+                const 当前内容 = 当前容器.querySelector('.内容')?.innerHTML;
+                const 有选项显示 = 当前容器.querySelector('.选项容器')?.children?.length > 0;
+                
+                if (!当前角色 && !当前内容 && !有选项显示) {
+                    当前容器.style.display = 'none';
+                }
             };
             
             if (getComputedStyle(容器).display === 'none') {
