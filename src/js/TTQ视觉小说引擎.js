@@ -81,7 +81,7 @@ const 初始状态 = {
     快进模式: false,
     快进定时器: null,
     打字音效: {
-        启用: false,
+        启用: true,
         路径: "assets/audio/sound/keydown.mp3",
         音量: 1,
         间隔字符数: 1,
