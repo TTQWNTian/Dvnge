@@ -2,5 +2,6 @@
 
 // 角色样式配置
 const 角色样式表 = {
-    'Dvnge': { color: '#FF7F84'},
+    '工藤美樱': { color: '#FF7F84' },
+    '尾碕真花': { color: '#5A64CF' }
 };
