@@ -1526,9 +1526,9 @@ function 更新场景(当前节点) {
                 隐藏对话框();
             } else {
                 容器.style.animation = '对话框退出动画 0.3s ease forwards';
-                容器.addEventListener('animationend', 隐藏对话框, {
-                    once: true
-                });
+                setTimeout(() => {
+                    容器.style.display = 'none';
+                }, 300);
             }
         }
     }
