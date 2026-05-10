@@ -1,5 +1,5 @@
 // js/TTQ视觉小说引擎.js
-// 版本: v1.7.1
+// 版本: v1.8.0-dev
 // 开发者: Tian
 // ⚠️对js不熟的不要动这个文件
 
@@ -92,6 +92,20 @@ const 初始状态 = {
 let 当前状态 = JSON.parse(JSON.stringify(初始状态));
 let 全局音效 = [];
 let 用户已交互 = false;
+let 隐藏模式激活 = false;
+
+function 切换对话框隐藏() {
+    const 对话包装容器 = document.getElementById('对话包装容器');
+    if (!对话包装容器) return;
+    
+    if (隐藏模式激活) {
+        对话包装容器.style.display = '';
+        隐藏模式激活 = false;
+    } else {
+        对话包装容器.style.display = 'none';
+        隐藏模式激活 = true;
+    }
+}
 
 function 加载章节(章节名) {
     return new Promise((resolve, reject) => {
@@ -2170,6 +2184,13 @@ function 关闭存档界面() {
 
 // ====================== 全局事件系统 ======================
 function 处理全局点击(e) {
+    if (e.target.closest && e.target.closest('#隐藏对话按钮')) {
+        return;
+    }
+    if (隐藏模式激活) {
+        切换对话框隐藏();
+        return;
+    }
     const 存档界面 = document.getElementById('存档界面');
     if (!存档界面) return;
     if (!存档界面.classList.contains('隐藏')) return;

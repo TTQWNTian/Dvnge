@@ -1,4 +1,4 @@
-<!-- TTQ视觉小说引擎v1.7.1 -->
+<!-- TTQ视觉小说引擎v1.8.0-dev -->
 <!-- game.html -->
 <!DOCTYPE html>
 <html>
@@ -25,17 +25,15 @@
     
     <!-- 主界面 -->
     <div class="主容器">
-        <div id="对话包装容器" class="对话包装容器">
+        <div id="对话包装容器">
             <!-- 左边头像容器 -->
             <div id="左边头像容器" class="头像容器 隐藏"></div>
             
             <!-- 对话框 -->
             <div id="对话框容器">
                 <div id="功能栏">
-                    <!-- 快进按钮 -->
-                    <button id="快进按钮" onclick="切换快进模式()">
-                        快进
-                    </button>
+                    <button id="快进按钮" onclick="切换快进模式()">快进</button>
+                    <button id="隐藏对话按钮" onclick="切换对话框隐藏()">隐藏</button>
                 </div>
                 <div class="角色"></div>
                 <div class="内容"></div>
