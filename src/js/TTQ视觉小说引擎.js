@@ -164,7 +164,6 @@ function 刷新界面文字() {
         }
     }
     
-    // 存档项里的加载按钮
     document.querySelectorAll('.加载按钮').forEach(btn => {
         btn.textContent = 获取界面文字('加载');
     });
