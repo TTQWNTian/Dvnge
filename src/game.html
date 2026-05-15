@@ -76,11 +76,9 @@
             <div class="存档项" data-slot="1" onclick="保存存档(1)"></div>
             <div class="存档项" data-slot="2" onclick="保存存档(2)"></div>
         </div>
-        
-        <!-- 导入导出按钮组 -->
         <div class="存档操作栏">
-            <button class="存档操作按钮" onclick="导出存档()">导出存档</button>
-            <button class="存档操作按钮" onclick="document.getElementById('导入文件').click()">导入存档</button>
+            <button id="导出存档按钮" onclick="导出存档()">导出存档</button>
+            <button id="导入存档按钮" onclick="document.getElementById('导入文件').click()">导入存档</button>
         </div>
         <input type="file" id="导入文件" class="隐藏" accept=".json" onchange="导入存档(event)">
         

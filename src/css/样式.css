@@ -411,7 +411,7 @@ body {
     z-index: 201;
 }
 
-.存档操作按钮 {
+.存档操作栏 button {
     background: none;
     border: 1px solid #889900;
     color: #889900;

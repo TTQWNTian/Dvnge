@@ -94,6 +94,214 @@ let 全局音效 = [];
 let 用户已交互 = false;
 let 隐藏模式激活 = false;
 
+// ====================== 多语言系统 ======================
+let 当前语言 = localStorage.getItem('Dvnge_语言') || null;
+let 语言配置表 = null;
+
+function 加载语言配置() {
+    return new Promise((resolve, reject) => {
+        if (语言配置表) {
+            resolve(语言配置表);
+            return;
+        }
+        
+        const script = document.createElement('script');
+        script.src = 'js/语言配置.js';
+        script.onload = () => {
+            if (typeof 语言配置 !== 'undefined') {
+                语言配置表 = 语言配置;
+                if (!当前语言 || !语言配置表.语言列表[当前语言]) {
+                    当前语言 = 语言配置表.默认语言;
+                }
+                resolve(语言配置表);
+            } else {
+                reject(new Error('语言配置文件加载失败'));
+            }
+        };
+        script.onerror = () => reject(new Error('无法加载语言配置文件'));
+        document.head.appendChild(script);
+    });
+}
+
+function 获取支持的语言列表() {
+    return 语言配置表 ? 语言配置表.语言列表 : { 'zh': '中文' };
+}
+
+function 切换语言(新语言代码) {
+    if (!语言配置表 || !语言配置表.语言列表[新语言代码]) return;
+    if (当前语言 === 新语言代码) return;
+    
+    当前语言 = 新语言代码;
+    localStorage.setItem('Dvnge_语言', 当前语言);
+    
+    if (当前状态.逐字显示.打字定时器) {
+        clearTimeout(当前状态.逐字显示.打字定时器);
+        当前状态.逐字显示.打字定时器 = null;
+    }
+    const 内容元素 = document.querySelector('.内容');
+    if (内容元素) 内容元素.dataset.正在打字 = 'false';
+    
+    刷新界面文字();
+    刷新当前对话();
+}
+
+function 刷新界面文字() {
+    if (!语言配置表) return;
+    
+    const 映射 = {
+        '快进按钮': '快进',
+        '隐藏对话按钮': '隐藏',
+        '存档界面标题': '存档管理',
+        '导出存档按钮': '导出存档',
+        '导入存档按钮': '导入存档',
+        '加载按钮通用': '加载'
+    };
+    
+    for (const [id, key] of Object.entries(映射)) {
+        const el = document.getElementById(id);
+        if (el) {
+            el.textContent = 获取界面文字(key);
+        }
+    }
+    
+    // 存档项里的加载按钮
+    document.querySelectorAll('.加载按钮').forEach(btn => {
+        btn.textContent = 获取界面文字('加载');
+    });
+}
+
+function 获取界面文字(标识) {
+    if (!语言配置表) return 标识;
+    if (当前语言 === 语言配置表.默认语言) return 标识;
+    
+    const 文字项 = 语言配置表.界面文字[标识];
+    if (!文字项) return 标识;
+    return 文字项[当前语言] || 文字项[语言配置表.默认语言] || 标识;
+}
+
+function 获取本地化文本(节点) {
+    if (!节点) return { 角色: '', 内容: '' };
+    
+    const 默认语言 = 语言配置表.默认语言;
+    
+    if (当前语言 === 默认语言) {
+        return {
+            角色: 节点.角色 || '',
+            内容: 节点.内容 || ''
+        };
+    }
+    
+    const 角色字段 = `角色_${当前语言}`;
+    const 内容字段 = `内容_${当前语言}`;
+    const 默认角色字段 = `角色_${默认语言}`;
+    const 默认内容字段 = `内容_${默认语言}`;
+    
+    return {
+        角色: 节点[角色字段] || 节点[默认角色字段] || 节点.角色 || '',
+        内容: 节点[内容字段] || 节点[默认内容字段] || 节点.内容 || ''
+    };
+}
+
+function 刷新当前对话() {
+    const 当前章节数据 = 章节库[当前状态.当前章节];
+    if (!当前章节数据) return;
+    
+    const 当前节点 = 当前章节数据[当前状态.当前索引];
+    if (!当前节点) return;
+    
+    const 容器 = document.getElementById('对话框容器');
+    if (!容器) return;
+    
+    const 角色元素 = 容器.querySelector('.角色');
+    const 内容元素 = 容器.querySelector('.内容');
+    const 正在打字 = 内容元素?.dataset.正在打字 === 'true';
+    
+    const { 角色, 内容 } = 获取本地化文本(当前节点);
+    
+    if (角色元素) {
+        let 处理后的角色 = 角色.replace(/{([^}]+)}/g, (m, v) => {
+            let val = 当前状态.用户变量;
+            v.split('.').forEach(k => val = val?.[k]);
+            return val || '';
+        });
+        角色元素.innerHTML = 处理后的角色;
+        角色元素.style.display = 处理后的角色 ? 'block' : 'none';
+        if (typeof 应用角色样式 === 'function') 应用角色样式();
+    }
+    
+    if (!正在打字 && 内容元素) {
+        let 处理后的内容 = 内容.replace(/{([^}]+)}/g, (m, v) => {
+            let val = 当前状态.用户变量;
+            v.split('.').forEach(k => val = val?.[k]);
+            return val || '';
+        });
+        内容元素.innerHTML = 处理后的内容;
+    }
+    
+    if (当前节点.选项 && 当前节点.选项.length > 0) {
+        const 选项容器 = 容器.querySelector('.选项容器');
+        const 按钮列表 = 选项容器?.querySelectorAll('.选项按钮');
+        当前节点.选项.forEach((opt, i) => {
+            if (按钮列表?.[i]) {
+                let 文本 = '';
+                if (当前语言 !== 语言配置表.默认语言) {
+                    const 选项字段 = `文本_${当前语言}`;
+                    文本 = opt[选项字段] || opt[`文本_${语言配置表.默认语言}`] || opt.文本 || '';
+                } else {
+                    文本 = opt.文本 || '';
+                }
+                文本 = 文本.replace(/{([^}]+)}/g, (m, v) => {
+                    let val = 当前状态.用户变量;
+                    v.split('.').forEach(k => val = val?.[k]);
+                    return val !== undefined ? val : '';
+                });
+                按钮列表[i].textContent = 文本;
+            }
+        });
+    }
+    
+    if (当前节点.输入) {
+        const 输入容器 = 容器.querySelector('.输入容器');
+        if (输入容器) {
+            const 提示元素 = 输入容器.querySelector('.输入提示文字');
+            if (提示元素 && 当前节点.输入.提示文字) {
+                let 提示文本 = '';
+                if (当前语言 !== 语言配置表.默认语言) {
+                    const 提示字段 = `提示文字_${当前语言}`;
+                    提示文本 = 当前节点.输入[提示字段] || 当前节点.输入[`提示文字_${语言配置表.默认语言}`] || 当前节点.输入.提示文字;
+                } else {
+                    提示文本 = 当前节点.输入.提示文字;
+                }
+                提示元素.textContent = 提示文本;
+            }
+            
+            const 占位符元素 = 输入容器.querySelector('.输入框');
+            if (占位符元素 && 当前节点.输入.占位符) {
+                let 占位符文本 = '';
+                if (当前语言 !== 语言配置表.默认语言) {
+                    const 占位符字段 = `占位符_${当前语言}`;
+                    占位符文本 = 当前节点.输入[占位符字段] || 当前节点.输入[`占位符_${语言配置表.默认语言}`] || 当前节点.输入.占位符;
+                } else {
+                    占位符文本 = 当前节点.输入.占位符;
+                }
+                占位符元素.placeholder = 占位符文本;
+            }
+            
+            const 按钮元素 = 输入容器.querySelector('.输入确认按钮');
+            if (按钮元素 && 当前节点.输入.按钮文字) {
+                let 按钮文本 = '';
+                if (当前语言 !== 语言配置表.默认语言) {
+                    const 按钮字段 = `按钮文字_${当前语言}`;
+                    按钮文本 = 当前节点.输入[按钮字段] || 当前节点.输入[`按钮文字_${语言配置表.默认语言}`] || 当前节点.输入.按钮文字;
+                } else {
+                    按钮文本 = 当前节点.输入.按钮文字;
+                }
+                按钮元素.textContent = 按钮文本;
+            }
+        }
+    }
+}
+
 function 切换对话框隐藏() {
     const 对话包装容器 = document.getElementById('对话包装容器');
     if (!对话包装容器) return;
@@ -283,7 +491,6 @@ function 应用动画(元素, animation值) {
 
 // ====================== 核心引擎函数 ======================
 function 切换章节(新章节名称, 起始索引 = 0, 选项 = {}) {
-    // 如果起始索引是字符串，当作标签处理
     if (typeof 起始索引 === 'string') {
         const 目标章节数据 = 章节库[新章节名称];
         if (目标章节数据) {
@@ -300,18 +507,15 @@ function 切换章节(新章节名称, 起始索引 = 0, 选项 = {}) {
         播放器.src = '';
     }
     
-    // 清理调查层
     const 已有调查层 = document.getElementById('调查层');
     if (已有调查层) 已有调查层.remove();
     document.body.style.cursor = 'default';
     
-    // 恢复按钮状态
     const 存档按钮 = document.getElementById('存档按钮');
     const 返回按钮 = document.getElementById('返回按钮');
     if (存档按钮) 存档按钮.classList.remove('隐藏');
     if (返回按钮) 返回按钮.classList.add('隐藏');
     
-    // 移除头像容器
     const 已有头像容器 = document.getElementById('对话框头像容器');
     if (已有头像容器) {
         已有头像容器.remove();
@@ -495,7 +699,6 @@ function 开始逐字显示(内容元素, 完整文本, 速度, 当前节点) {
             内容元素.dataset.正在打字 = 'false';
             当前状态.逐字显示.打字已完成 = true;
             
-            // 打字结束时停止音效
             if (当前状态.打字音效.当前音效对象) {
                 当前状态.打字音效.当前音效对象.pause();
                 当前状态.打字音效.当前音效对象.currentTime = 0;
@@ -556,7 +759,6 @@ function 开始逐字显示(内容元素, 完整文本, 速度, 当前节点) {
         
         内容元素.innerHTML = 当前HTML;
         
-        // 每次更新内容时都重新应用动画（让动画持续播放）
         if (当前节点 && 当前节点.动画?.内容) {
             内容元素.style.animation = 当前节点.动画.内容;
         }
@@ -609,7 +811,6 @@ function 开始快进() {
         return;
     }
     
-    // 判断是否有交互：选项、输入框、调查模式
     const 有交互 = !!(当前节点.选项?.length) || !!(当前节点.输入) || !!(当前节点.调查);
     
     if (!有交互) {
@@ -622,7 +823,7 @@ function 开始快进() {
             
             当前状态.当前索引++;
             继续剧情();
-        }, 200); // 快进间隔
+        }, 200);
     }
 }
 
@@ -808,7 +1009,6 @@ function 更新场景(当前节点) {
         }
     }
     
-    // 背景系统
     if (节点.背景 !== undefined) {
         if (节点.背景 === null) {
             const 背景视频元素 = document.getElementById('背景视频');
@@ -816,7 +1016,6 @@ function 更新场景(当前节点) {
             
             const 背景容器 = document.getElementById('背景容器');
             if (背景容器) {
-                // 渐出背景
                 背景容器.style.opacity = '0';
                 背景容器.style.background = '#000';
             }
@@ -847,7 +1046,6 @@ function 更新场景(当前节点) {
             const 文件扩展名 = 背景值.split('.').pop().toLowerCase();
             
             if (视频扩展名.includes(文件扩展名)) {
-                // 视频背景
                 const 已有背景视频 = document.getElementById('背景视频');
                 if (已有背景视频) 已有背景视频.remove();
                 
@@ -889,7 +1087,6 @@ function 更新场景(当前节点) {
                 document.body.style.background = '#000';
                 当前状态.背景 = '#000';
             } else {
-                // 图片背景
                 const 背景容器 = document.getElementById('背景容器');
                 if (!背景容器) return;
                 
@@ -905,7 +1102,6 @@ function 更新场景(当前节点) {
                 if (已有背景视频) 已有背景视频.remove();
                 背景容器.style.opacity = '0';
                 
-                // 等待渐出动画完成后再设置新背景并渐入
                 setTimeout(() => {
                     背景容器.style.background = 背景图;
                     void 背景容器.offsetHeight;
@@ -918,7 +1114,6 @@ function 更新场景(当前节点) {
         }
     }
     
-    // 标题系统
     if (节点.标题) {
         const 标题容器 = document.getElementById('标题容器');
         const 标题设置 = 节点.标题;
@@ -976,7 +1171,6 @@ function 更新场景(当前节点) {
         }
     }
     
-    // 立绘系统
     ['左立绘', '中立绘', '右立绘'].forEach(位置 => {
         let 元素 = document.getElementById(位置);
         if (!元素) return;
@@ -1072,7 +1266,6 @@ function 更新场景(当前节点) {
         应用动画(document.getElementById('右立绘'), 节点.动画.右立绘);
     }
     
-    // 音乐系统
     const 音乐播放器 = document.getElementById('背景音乐');
     if (节点.hasOwnProperty('音乐')) {
         let 音乐路径 = 节点.音乐;
@@ -1118,7 +1311,6 @@ function 更新场景(当前节点) {
         }
     }
     
-    // 音效系统
     if (节点.音效) {
         let 音效路径 = 节点.音效;
         
@@ -1161,7 +1353,6 @@ function 更新场景(当前节点) {
         }
     }
     
-    // 条件判断逻辑
     if (节点.条件) {
         const 条件结果 = 解析条件表达式(节点.条件.表达式);
         const 跳转目标 = 条件结果 ? 节点.条件.真目标 : 节点.条件.假目标;
@@ -1181,18 +1372,14 @@ function 更新场景(当前节点) {
         return;
     }
     
-    // 自动存档
     if (节点.自动存档) {
         自动存档();
     }
     
-    // CG解锁功能
     if (节点.解锁CG) {
         解锁CG(节点.解锁CG.名称, 节点.解锁CG.路径);
     }
     
-    // ====================== 调查模式 ======================
-    // 移除之前可能存在的调查层
     const 已有调查层 = document.getElementById('调查层');
     if (已有调查层) 已有调查层.remove();
     document.body.style.cursor = 'default';
@@ -1203,7 +1390,6 @@ function 更新场景(当前节点) {
     if (节点.调查) {
         const 调查设置 = 节点.调查;
         
-        // 禁用全局点击
         document.removeEventListener('click', 处理全局点击);
         
         if (存档按钮) 存档按钮.classList.add('隐藏');
@@ -1218,10 +1404,8 @@ function 更新场景(当前节点) {
                 if (存档按钮) 存档按钮.classList.remove('隐藏');
                 if (返回按钮) 返回按钮.classList.add('隐藏');
                 
-                // 恢复全局点击
                 document.addEventListener('click', 处理全局点击);
                 
-                // 处理返回跳转
                 const 返回目标 = 节点.调查?.返回;
                 if (返回目标 !== undefined) {
                     if (typeof 返回目标 === 'number') {
@@ -1285,7 +1469,6 @@ function 更新场景(当前节点) {
                     区域元素.appendChild(贴图);
                 }
                 
-                // 区域元素光标样式
                 区域元素.style.cursor = 调查设置.光标 || 'pointer';
                 
                 区域元素.addEventListener('click', (e) => {
@@ -1326,7 +1509,6 @@ function 更新场景(当前节点) {
         if (返回按钮) 返回按钮.classList.add('隐藏');
     }
     
-    // 头像系统
     const 左边容器 = document.getElementById('左边头像容器');
     const 右边容器 = document.getElementById('右边头像容器');
     左边容器.classList.add('隐藏');
@@ -1339,7 +1521,6 @@ function 更新场景(当前节点) {
         
         if (节点头像.路径) {
             let 头像路径 = 节点头像.路径;
-            // 解析变量
             头像路径 = 头像路径.replace(/{([^}]+)}/g, (匹配, 变量名) => {
                 const 变量路径 = 变量名.trim().split('.');
                 let 值 = 当前状态.用户变量;
@@ -1375,7 +1556,6 @@ function 更新场景(当前节点) {
         当前状态.头像.路径 = "";
     }
     
-    // 对话框系统
     const 容器 = document.getElementById('对话框容器');
     if (容器) {
         const 有对话内容 = 节点.角色 || 节点.内容;
@@ -1389,7 +1569,9 @@ function 更新场景(当前节点) {
             容器.style.display = 'block';
             
             const 角色元素 = 容器.querySelector('.角色');
-            let 处理后的角色 = 节点.角色 || '';
+            
+            const { 角色: 本地化角色 } = 获取本地化文本(节点);
+            let 处理后的角色 = 本地化角色;
             
             处理后的角色 = 处理后的角色.replace(/{([^}]+)}/g, (匹配, 变量名) => {
                 const 变量路径 = 变量名.trim().split('.');
@@ -1415,7 +1597,9 @@ function 更新场景(当前节点) {
             }
             
             const 内容元素 = 容器.querySelector('.内容');
-            let 处理后的内容 = 节点.内容 || '';
+            
+            const { 内容: 本地化内容 } = 获取本地化文本(节点);
+            let 处理后的内容 = 本地化内容;
             
             处理后的内容 = 处理后的内容.replace(/{([^}]+)}/g, (匹配, 变量名) => {
                 const 变量路径 = 变量名.trim().split('.');
@@ -1467,7 +1651,14 @@ function 更新场景(当前节点) {
                     const 选项按钮 = document.createElement('div');
                     选项按钮.className = '选项按钮';
                     
-                    let 选项文本 = 选项.文本 || '选项';
+                    let 选项文本 = '';
+                    if (当前语言 !== 语言配置表.默认语言) {
+                        const 选项字段 = `文本_${当前语言}`;
+                        选项文本 = 选项[选项字段] || 选项[`文本_${语言配置表.默认语言}`] || 选项.文本 || '';
+                    } else {
+                        选项文本 = 选项.文本 || '';
+                    }
+                    
                     选项文本 = 选项文本.replace(/{([^}]+)}/g, (匹配, 变量名) => {
                         const 变量路径 = 变量名.trim().split('.');
                         let 值 = 当前状态.用户变量;
@@ -1525,7 +1716,6 @@ function 更新场景(当前节点) {
             }
         } else {
             const 隐藏对话框 = () => {
-                // 检查当前是否有交互内容，如果有则不隐藏（快进中断了退出动画）
                 const 当前容器 = document.getElementById('对话框容器');
                 const 当前角色 = 当前容器.querySelector('.角色')?.textContent;
                 const 当前内容 = 当前容器.querySelector('.内容')?.innerHTML;
@@ -1547,7 +1737,6 @@ function 更新场景(当前节点) {
         }
     }
     
-    // 输入系统
     if (节点.输入) {
         document.removeEventListener('click', 处理全局点击);
         
@@ -1557,18 +1746,39 @@ function 更新场景(当前节点) {
         if (节点.输入.提示文字) {
             const 提示元素 = document.createElement('div');
             提示元素.className = '输入提示文字';
-            提示元素.textContent = 节点.输入.提示文字;
+            let 提示文本 = '';
+            if (当前语言 !== 语言配置表.默认语言) {
+                const 提示字段 = `提示文字_${当前语言}`;
+                提示文本 = 节点.输入[提示字段] || 节点.输入[`提示文字_${语言配置表.默认语言}`] || 节点.输入.提示文字;
+            } else {
+                提示文本 = 节点.输入.提示文字;
+            }
+            提示元素.textContent = 提示文本;
             输入容器.appendChild(提示元素);
         }
         
         const 输入框 = document.createElement('input');
         输入框.className = '输入框';
-        输入框.placeholder = 节点.输入.占位符 || '请输入...';
+        let 占位符文本 = '';
+        if (当前语言 !== 语言配置表.默认语言) {
+            const 占位符字段 = `占位符_${当前语言}`;
+            占位符文本 = 节点.输入[占位符字段] || 节点.输入[`占位符_${语言配置表.默认语言}`] || 节点.输入.占位符 || '请输入...';
+        } else {
+            占位符文本 = 节点.输入.占位符 || '请输入...';
+        }
+        输入框.placeholder = 占位符文本;
         输入框.maxLength = 节点.输入.最大长度 || 20;
         
         const 确认按钮 = document.createElement('div');
         确认按钮.className = '输入确认按钮';
-        确认按钮.textContent = 节点.输入.按钮文字 || '确认';
+        let 按钮文本 = '';
+        if (当前语言 !== 语言配置表.默认语言) {
+            const 按钮字段 = `按钮文字_${当前语言}`;
+            按钮文本 = 节点.输入[按钮字段] || 节点.输入[`按钮文字_${语言配置表.默认语言}`] || 节点.输入.按钮文字 || '确认';
+        } else {
+            按钮文本 = 节点.输入.按钮文字 || '确认';
+        }
+        确认按钮.textContent = 按钮文本;
         
         const 处理确认 = () => {
             const 输入值 = 输入框.value.trim();
@@ -1632,7 +1842,6 @@ function 更新场景(当前节点) {
         应用动画(背景容器元素, 节点.动画.背景);
     }
     
-    // 自定义功能
     if (节点.自定义功能) {
         try {
             eval(节点.自定义功能);
@@ -1679,7 +1888,7 @@ function 解析条件表达式(表达式) {
 
 // ====================== 选项处理系统 ======================
 function 处理选项点击(选项) {
-    停止快进(); // 用户选择选项，停止快进
+    停止快进();
     
     let 条件满足 = true;
     if (选项.条件) {
@@ -1764,7 +1973,6 @@ function 继续剧情() {
     if (当前状态.当前索引 < 当前章节数据.length) {
         更新场景(当前章节数据[当前状态.当前索引]);
         
-        // 快进模式检查：如果当前节点无交互，启动下一次快进
         if (当前状态.快进模式) {
             const 当前节点 = 当前章节数据[当前状态.当前索引];
             const 有交互 = !!(当前节点.选项?.length) || !!(当前节点.输入) || !!(当前节点.调查);
@@ -1778,7 +1986,7 @@ function 继续剧情() {
             }
         }
     } else {
-        停止快进(); // 章节结束，停止快进
+        停止快进();
     }
 }
 
@@ -1803,7 +2011,6 @@ function 生成存档快照() {
             位置: 当前状态.标题.位置,
             样式: 当前状态.标题.样式
         },
-        // 添加头像存档
         头像: {
             显示: 当前状态.头像.显示,
             路径: 当前状态.头像.路径,
@@ -2071,10 +2278,17 @@ function 更新存档显示(存档位) {
     
     const 数据 = localStorage.getItem(存档键名);
     
-    存档项.innerHTML = 数据 ?
-        `<span>${是自动存档 ? '自动存档' : '存档' + 存档位}: ${JSON.parse(数据).时间}</span>
-     <button class="加载按钮">加载</button>` :
-        `<span>${是自动存档 ? '暂无自动存档' : '空存档位' + 存档位}</span>`;
+    if (数据) {
+        const 存档数据 = JSON.parse(数据);
+        const 时间显示 = 存档数据.时间 || '未知时间';
+        const 章节显示 = 存档数据.章节 || '未知章节';
+        const 存档文字 = 是自动存档 ? 获取界面文字('自动存档') : `${获取界面文字('手动存档')}${存档位}`;
+        存档项.innerHTML = `<span>${存档文字}: ${章节显示} · ${时间显示}</span>
+     <button class="加载按钮">${获取界面文字('加载')}</button>`;
+    } else {
+        const 空存档文字 = 是自动存档 ? 获取界面文字('自动存档') : `${获取界面文字('手动存档')}${存档位}`;
+        存档项.innerHTML = `<span>${空存档文字}: ${获取界面文字('空存档位')}</span>`;
+    }
     
     const 加载按钮 = 存档项.querySelector('.加载按钮');
     if (加载按钮) {
@@ -2088,6 +2302,13 @@ function 更新存档显示(存档位) {
         存档项.classList.add('自动存档项');
     } else {
         存档项.classList.remove('自动存档项');
+    }
+}
+
+function 更新所有存档项显示文字() {
+    更新存档显示('auto');
+    for (let i = 1; i <= 最大存档位; i++) {
+        更新存档显示(i);
     }
 }
 
@@ -2116,7 +2337,7 @@ function 加载存档(存档位) {
             关闭存档界面();
         }
         
-        显示提示(`${存档位 === 'auto' ? '自动' : '手动'}存档加载成功`);
+        显示提示(获取界面文字('加载成功'));
         
     } catch (错误) {
         console.error('存档加载失败:', 错误);
@@ -2168,14 +2389,10 @@ function 打开存档界面(e) {
     
     停止快进();
     
-    更新存档显示('auto');
+    更新所有存档项显示文字();
     
     const 存档界面 = document.getElementById('存档界面');
     存档界面.classList.remove('隐藏');
-    
-    for (let i = 1; i <= 最大存档位; i++) {
-        更新存档显示(i);
-    }
 }
 
 function 关闭存档界面() {
@@ -2223,7 +2440,15 @@ function 处理全局点击(e) {
 }
 
 // ====================== 初始化系统 ======================
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        await 加载语言配置();
+    } catch (e) {
+        console.warn('语言配置加载失败，使用默认:', e);
+        语言配置表 = { 默认语言: 'zh', 语言列表: { 'zh': '中文' }, 界面文字: {} };
+        当前语言 = 'zh';
+    }
+    
     初始化CG存储();
     从本地存储加载用户变量();
     
@@ -2259,7 +2484,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const 索引参数 = 地址参数.get('索引');
     const 存档参数 = 地址参数.get('存档');
     
-    // 加载章节数据后再启动
     async function 初始化引擎() {
         try {
             await 加载所有章节();
@@ -2281,6 +2505,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     throw new Error("缺少序章数据");
                 }
             }
+            
+            刷新界面文字();
+            
         } catch (错误) {
             console.error('初始化失败:', 错误);
             document.body.innerHTML = `
