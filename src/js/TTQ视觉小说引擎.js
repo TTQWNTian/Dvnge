@@ -123,10 +123,6 @@ function 加载语言配置() {
     });
 }
 
-function 获取支持的语言列表() {
-    return 语言配置表 ? 语言配置表.语言列表 : { 'zh': '中文' };
-}
-
 function 切换语言(新语言代码) {
     if (!语言配置表 || !语言配置表.语言列表[新语言代码]) return;
     if (当前语言 === 新语言代码) return;
@@ -147,26 +143,21 @@ function 切换语言(新语言代码) {
 
 function 刷新界面文字() {
     if (!语言配置表) return;
-    
+
     const 映射 = {
         '快进按钮': '快进',
         '隐藏对话按钮': '隐藏',
-        '存档界面标题': '存档管理',
         '导出存档按钮': '导出存档',
-        '导入存档按钮': '导入存档',
-        '加载按钮通用': '加载'
+        '导入存档按钮': '导入存档'
     };
-    
+
     for (const [id, key] of Object.entries(映射)) {
         const el = document.getElementById(id);
-        if (el) {
-            el.textContent = 获取界面文字(key);
-        }
+        if (el) el.textContent = 获取界面文字(key);
     }
-    
-    document.querySelectorAll('.加载按钮').forEach(btn => {
-        btn.textContent = 获取界面文字('加载');
-    });
+
+    const 存档标题 = document.querySelector('#存档界面 .标题');
+    if (存档标题) 存档标题.textContent = 获取界面文字('存档管理');
 }
 
 function 获取界面文字(标识) {
