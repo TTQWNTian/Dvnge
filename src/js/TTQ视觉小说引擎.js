@@ -208,48 +208,66 @@ function 刷新当前对话() {
     
     const 角色元素 = 容器.querySelector('.角色');
     const 内容元素 = 容器.querySelector('.内容');
-    const 正在打字 = 内容元素?.dataset.正在打字 === 'true';
+    const 选项容器 = 容器.querySelector('.选项容器');
     
     const { 角色, 内容 } = 获取本地化文本(当前节点);
     
     if (角色元素) {
-        let 处理后的角色 = 角色.replace(/{([^}]+)}/g, (m, v) => {
+        let 处理后的角色 = 角色.replace(/{([^}]+)}/g, (match, 变量路径) => {
             let val = 当前状态.用户变量;
-            v.split('.').forEach(k => val = val?.[k]);
-            return val || '';
+            const 路径段 = 变量路径.trim().split('.');
+            for (let 段 of 路径段) {
+                if (val === undefined || val === null) break;
+                val = val[段];
+            }
+            return (val !== undefined && val !== null) ? val : '';
         });
         角色元素.innerHTML = 处理后的角色;
         角色元素.style.display = 处理后的角色 ? 'block' : 'none';
         if (typeof 应用角色样式 === 'function') 应用角色样式();
     }
     
-    if (!正在打字 && 内容元素) {
-        let 处理后的内容 = 内容.replace(/{([^}]+)}/g, (m, v) => {
+    if (内容元素) {
+        let 处理后的内容 = 内容.replace(/{([^}]+)}/g, (match, 变量路径) => {
             let val = 当前状态.用户变量;
-            v.split('.').forEach(k => val = val?.[k]);
-            return val || '';
+            const 路径段 = 变量路径.trim().split('.');
+            for (let 段 of 路径段) {
+                if (val === undefined || val === null) break;
+                val = val[段];
+            }
+            return (val !== undefined && val !== null) ? val : '';
         });
         内容元素.innerHTML = 处理后的内容;
+        内容元素.dataset.正在打字 = 'false';
+        if (当前状态.逐字显示.打字定时器) {
+            clearTimeout(当前状态.逐字显示.打字定时器);
+            当前状态.逐字显示.打字定时器 = null;
+        }
+        当前状态.逐字显示.打字已完成 = true;
     }
     
     if (当前节点.选项 && 当前节点.选项.length > 0) {
-        const 选项容器 = 容器.querySelector('.选项容器');
-        const 按钮列表 = 选项容器?.querySelectorAll('.选项按钮');
-        当前节点.选项.forEach((opt, i) => {
-            if (按钮列表?.[i]) {
-                let 文本 = '';
+        if (!选项容器) return;
+        const 按钮列表 = 选项容器.querySelectorAll('.选项按钮');
+        当前节点.选项.forEach((opt, idx) => {
+            if (按钮列表[idx]) {
+                let 选项文本 = '';
                 if (当前语言 !== 语言配置表.默认语言) {
                     const 选项字段 = `文本_${当前语言}`;
-                    文本 = opt[选项字段] || opt[`文本_${语言配置表.默认语言}`] || opt.文本 || '';
+                    选项文本 = opt[选项字段] || opt[`文本_${语言配置表.默认语言}`] || opt.文本 || '';
                 } else {
-                    文本 = opt.文本 || '';
+                    选项文本 = opt.文本 || '';
                 }
-                文本 = 文本.replace(/{([^}]+)}/g, (m, v) => {
+                选项文本 = 选项文本.replace(/{([^}]+)}/g, (match, 变量路径) => {
                     let val = 当前状态.用户变量;
-                    v.split('.').forEach(k => val = val?.[k]);
-                    return val !== undefined ? val : '';
+                    const 路径段 = 变量路径.trim().split('.');
+                    for (let 段 of 路径段) {
+                        if (val === undefined || val === null) break;
+                        val = val[段];
+                    }
+                    return (val !== undefined && val !== null) ? val : '';
                 });
-                按钮列表[i].textContent = 文本;
+                按钮列表[idx].textContent = 选项文本;
             }
         });
     }
@@ -269,8 +287,8 @@ function 刷新当前对话() {
                 提示元素.textContent = 提示文本;
             }
             
-            const 占位符元素 = 输入容器.querySelector('.输入框');
-            if (占位符元素 && 当前节点.输入.占位符) {
+            const 输入框 = 输入容器.querySelector('.输入框');
+            if (输入框 && 当前节点.输入.占位符) {
                 let 占位符文本 = '';
                 if (当前语言 !== 语言配置表.默认语言) {
                     const 占位符字段 = `占位符_${当前语言}`;
@@ -278,11 +296,11 @@ function 刷新当前对话() {
                 } else {
                     占位符文本 = 当前节点.输入.占位符;
                 }
-                占位符元素.placeholder = 占位符文本;
+                输入框.placeholder = 占位符文本;
             }
             
-            const 按钮元素 = 输入容器.querySelector('.输入确认按钮');
-            if (按钮元素 && 当前节点.输入.按钮文字) {
+            const 确认按钮 = 输入容器.querySelector('.输入确认按钮');
+            if (确认按钮 && 当前节点.输入.按钮文字) {
                 let 按钮文本 = '';
                 if (当前语言 !== 语言配置表.默认语言) {
                     const 按钮字段 = `按钮文字_${当前语言}`;
@@ -290,8 +308,20 @@ function 刷新当前对话() {
                 } else {
                     按钮文本 = 当前节点.输入.按钮文字;
                 }
-                按钮元素.textContent = 按钮文本;
+                确认按钮.textContent = 按钮文本;
             }
+        }
+    }
+    
+    if (当前节点.标题) {
+        const 标题容器 = document.getElementById('标题容器');
+        if (标题容器 && 当前节点.标题.内容) {
+            let 标题内容 = 当前节点.标题.内容;
+            if (当前语言 !== 语言配置表.默认语言) {
+                const 标题字段 = `标题_${当前语言}`;
+                标题内容 = 当前节点.标题[标题字段] || 当前节点.标题[`标题_${语言配置表.默认语言}`] || 当前节点.标题.内容;
+            }
+            标题容器.textContent = 标题内容;
         }
     }
 }
