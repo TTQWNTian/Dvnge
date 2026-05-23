@@ -134,9 +134,9 @@
 </head>
 <body>
     <div class="控制组件">
-        <h1>Game Title</h1>
+        <h1 id="游戏标题">Game Title</h1>
         <nav>
-            <button onclick="window.location.href='game.html'">开始游戏</button><br>
+            <button id="开始游戏按钮" onclick="window.location.href='game.html'">开始游戏</button><br>
             <button id="读档按钮">读取存档</button><br>
             <button id="语言按钮">语言</button>
         </nav>
@@ -152,6 +152,68 @@
     </div>
     
     <script>
+        // ====================== 开始界面多语言配置 ======================
+        let 当前界面语言 = localStorage.getItem('Dvnge_语言') || 'zh';
+        
+        const 界面文字 = {
+            'zh': {
+                '游戏标题': 'Game Title',
+                '开始游戏': '开始游戏',
+                '读取存档': '读取存档',
+                '语言': '语言',
+                '选择语言': '选择语言',
+                '自动存档': '自动存档',
+                '手动存档': '手动存档',
+                '存档位': '存档位',
+                '空存档': '空存档',
+                '数据损坏': '数据损坏',
+                '无数据': '无数据',
+                '语言配置加载失败': '语言配置加载失败'
+            },
+            'en': {
+                '游戏标题': 'Game Title',
+                '开始游戏': 'Start Game',
+                '读取存档': 'Load Game',
+                '语言': 'Language',
+                '选择语言': 'Select Language',
+                '自动存档': 'Auto Save',
+                '手动存档': 'Manual Save',
+                '存档位': 'Save Slot',
+                '空存档': 'Empty',
+                '数据损坏': 'Corrupted Data',
+                '无数据': 'No Data',
+                '语言配置加载失败': 'Failed to load language config'
+            },
+            'ja': {
+                '游戏标题': 'Game Title',
+                '开始游戏': 'ゲーム開始',
+                '读取存档': 'ロード',
+                '语言': '言語',
+                '选择语言': '言語選択',
+                '自动存档': 'オートセーブ',
+                '手动存档': 'セーブ',
+                '存档位': 'セーブスロット',
+                '空存档': '空き',
+                '数据损坏': 'データ破損',
+                '无数据': 'データなし',
+                '语言配置加载失败': '言語設定の読み込みに失敗'
+            }
+        };
+        
+        function 刷新界面文字() {
+            const 文字 = 界面文字[当前界面语言] || 界面文字['zh'];
+            document.getElementById('游戏标题').textContent = 文字['游戏标题'];
+            document.getElementById('开始游戏按钮').textContent = 文字['开始游戏'];
+            document.getElementById('读档按钮').textContent = 文字['读取存档'];
+            document.getElementById('语言按钮').textContent = 文字['语言'];
+        }
+        
+        function 切换界面语言(语言代码) {
+            当前界面语言 = 语言代码;
+            localStorage.setItem('Dvnge_语言', 语言代码);
+            刷新界面文字();
+        }
+        
         // ====================== 读档功能 ======================
         function 跳转到游戏(slot) {
             location.href = 'game.html?存档=' + slot;
@@ -161,29 +223,28 @@
             const 弹层 = document.getElementById('弹层');
             const 标题 = document.getElementById('弹层标题');
             const 内容 = document.getElementById('弹层内容');
+            const 文字 = 界面文字[当前界面语言] || 界面文字['zh'];
             
-            标题.textContent = '读取存档';
+            标题.textContent = 文字['读取存档'];
             内容.innerHTML = '';
             
-            // 自动存档
             const auto = localStorage.getItem('自动存档');
             const autoBlock = document.createElement('div');
             autoBlock.className = '弹层项';
             if (auto) {
                 try {
                     const d = JSON.parse(auto);
-                    autoBlock.innerHTML = `<strong>自动存档</strong><p style="font-size:0.8em;margin-top:5px;">${d.章节 || '未知'} · ${d.时间 || '未知'}</p>`;
+                    autoBlock.innerHTML = `<strong>${文字['自动存档']}</strong><p style="font-size:0.8em;margin-top:5px;">${d.章节 || '未知'} · ${d.时间 || '未知'}</p>`;
                     autoBlock.onclick = () => 跳转到游戏('auto');
                 } catch {
-                    autoBlock.innerHTML = `<strong>自动存档</strong><p style="font-size:0.8em;margin-top:5px;">数据损坏</p>`;
+                    autoBlock.innerHTML = `<strong>${文字['自动存档']}</strong><p style="font-size:0.8em;margin-top:5px;">${文字['数据损坏']}</p>`;
                 }
             } else {
                 autoBlock.classList.add('空');
-                autoBlock.innerHTML = `<strong>自动存档</strong><p style="font-size:0.8em;margin-top:5px;">无数据</p>`;
+                autoBlock.innerHTML = `<strong>${文字['自动存档']}</strong><p style="font-size:0.8em;margin-top:5px;">${文字['无数据']}</p>`;
             }
             内容.appendChild(autoBlock);
             
-            // 手动存档 1 和 2
             for (let i = 1; i <= 2; i++) {
                 const key = `手动存档_${i}`;
                 const data = localStorage.getItem(key);
@@ -192,14 +253,14 @@
                 if (data) {
                     try {
                         const d = JSON.parse(data);
-                        slotBlock.innerHTML = `<strong>存档位 ${i}</strong><p style="font-size:0.8em;margin-top:5px;">${d.章节 || '未知'} · ${d.时间 || '未知'}</p>`;
+                        slotBlock.innerHTML = `<strong>${文字['手动存档']} ${i}</strong><p style="font-size:0.8em;margin-top:5px;">${d.章节 || '未知'} · ${d.时间 || '未知'}</p>`;
                         slotBlock.onclick = () => 跳转到游戏(i);
                     } catch {
-                        slotBlock.innerHTML = `<strong>存档位 ${i}</strong><p style="font-size:0.8em;margin-top:5px;">数据损坏</p>`;
+                        slotBlock.innerHTML = `<strong>${文字['手动存档']} ${i}</strong><p style="font-size:0.8em;margin-top:5px;">${文字['数据损坏']}</p>`;
                     }
                 } else {
                     slotBlock.classList.add('空');
-                    slotBlock.innerHTML = `<strong>存档位 ${i}</strong><p style="font-size:0.8em;margin-top:5px;">空存档</p>`;
+                    slotBlock.innerHTML = `<strong>${文字['手动存档']} ${i}</strong><p style="font-size:0.8em;margin-top:5px;">${文字['空存档']}</p>`;
                 }
                 内容.appendChild(slotBlock);
             }
@@ -212,32 +273,30 @@
             const 弹层 = document.getElementById('弹层');
             const 标题 = document.getElementById('弹层标题');
             const 内容 = document.getElementById('弹层内容');
+            const 文字 = 界面文字[当前界面语言] || 界面文字['zh'];
             
-            标题.textContent = '选择语言';
+            标题.textContent = 文字['选择语言'];
             内容.innerHTML = '';
             
-            const script = document.createElement('script');
-            script.src = 'js/语言配置.js';
-            script.onload = () => {
-                for (const [代码, 名称] of Object.entries(语言配置.语言列表)) {
-                    const 选项 = document.createElement('div');
-                    选项.className = '弹层项';
-                    const 当前语言 = localStorage.getItem('Dvnge_语言') || 语言配置.默认语言;
-                    if (代码 === 当前语言) {
-                        选项.classList.add('当前');
-                    }
-                    选项.innerHTML = `<strong>${名称}</strong>`;
-                    选项.onclick = () => {
-                        localStorage.setItem('Dvnge_语言', 代码);
-                        弹层.classList.remove('显示');
-                    };
-                    内容.appendChild(选项);
+            const 语言列表 = {
+                'zh': '中文',
+                'en': 'English',
+                'ja': '日本語'
+            };
+            
+            for (const [代码, 名称] of Object.entries(语言列表)) {
+                const 选项 = document.createElement('div');
+                选项.className = '弹层项';
+                if (代码 === 当前界面语言) {
+                    选项.classList.add('当前');
                 }
-            };
-            script.onerror = () => {
-                内容.innerHTML = '<div class="弹层项">语言配置加载失败</div>';
-            };
-            document.head.appendChild(script);
+                选项.innerHTML = `<strong>${名称}</strong>`;
+                选项.onclick = () => {
+                    切换界面语言(代码);
+                    弹层.classList.remove('显示');
+                };
+                内容.appendChild(选项);
+            }
             
             弹层.classList.add('显示');
         }
@@ -252,12 +311,14 @@
         document.getElementById('语言按钮').onclick = 显示语言界面;
         document.querySelector('.弹层关闭按钮').onclick = 关闭弹层;
         
-        // 点击弹层背景关闭
         document.getElementById('弹层').onclick = (e) => {
             if (e.target === document.getElementById('弹层')) {
                 关闭弹层();
             }
         };
+        
+        // 初始化界面文字
+        刷新界面文字();
     </script>
 </body>
 </html>
