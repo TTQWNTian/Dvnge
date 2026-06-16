@@ -2547,4 +2547,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     document.addEventListener('click', 处理全局点击);
     document.addEventListener('contextmenu', (e) => e.preventDefault());
+    // 隐藏对话框点击空白恢复显示
+    document.addEventListener('click', function(e) {
+        if (!隐藏模式激活) return;
+        
+        if (e.target.closest && e.target.closest('#隐藏对话按钮')) return;
+        
+        if (e.target.closest && e.target.closest('.输入容器')) return;
+        
+        const 存档界面 = document.getElementById('存档界面');
+        if (存档界面 && !存档界面.classList.contains('隐藏')) return;
+        
+        切换对话框隐藏();
+        e.stopPropagation();
+    }, true);
 });
