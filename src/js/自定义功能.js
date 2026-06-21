@@ -7,3 +7,7 @@ function 自定义按钮功能(e) {
 }
 
 // 其他自定义代码……
+
+function 弹窗(text) {
+    alert(text)
+}
