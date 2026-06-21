@@ -1939,17 +1939,15 @@ function 处理全局点击(e) {
     if (e.target.closest && e.target.closest('#隐藏对话按钮')) {
         return;
     }
-    
     if (隐藏模式激活) {
         切换对话框隐藏();
         return;
     }
-    
     const 存档界面 = document.getElementById('存档界面');
     if (!存档界面) return;
     if (!存档界面.classList.contains('隐藏')) return;
     
-    if (e.target.closest && e.target.closest('.输入容器')) return;
+    if (e.target.closest('.输入容器')) return;
     
     const 当前章节数据 = 章节库[当前状态.当前章节];
     if (!当前章节数据) return;
@@ -1957,18 +1955,24 @@ function 处理全局点击(e) {
     const 当前节点 = 当前章节数据[当前状态.当前索引];
     if (!当前节点) return;
     
-    if (当前节点.选项?.length > 0) return;
-    if (当前节点.输入) return;
+    if (当前节点.选项?.length > 0) {
+        return;
+    }
+    
+    if (当前节点.输入) {
+        return;
+    }
     
     const 正在打字 = document.querySelector('.内容')?.dataset.正在打字 === 'true';
-    if (正在打字) return;
+    if (正在打字) {
+        return;
+    }
     
     if (当前状态.当前索引 < 当前章节数据.length) {
         当前状态.当前索引++;
         更新场景(当前章节数据[当前状态.当前索引]);
     }
 }
-
 // ====================== 存档系统 ======================
 function 生成存档快照() {
     return {
@@ -2273,7 +2277,7 @@ async function 初始化引擎() {
         切换章节('序章', 0);
     }
 }
-// ====================== 自动初始化 ======================
+// 自动初始化
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function() {
         初始化引擎().catch(e => console.error('引擎初始化失败:', e));
@@ -2281,3 +2285,16 @@ if (document.readyState === 'loading') {
 } else {
     初始化引擎().catch(e => console.error('引擎初始化失败:', e));
 }
+// ====================== 隐藏对话框点击空白恢复显示 ======================
+document.addEventListener('click', function(e) {
+    if (!隐藏模式激活) return;
+    
+    if (e.target.closest && e.target.closest('#隐藏对话按钮')) return;
+    if (e.target.closest && e.target.closest('.输入容器')) return;
+    
+    const 存档界面 = document.getElementById('存档界面');
+    if (存档界面 && !存档界面.classList.contains('隐藏')) return;
+    
+    切换对话框隐藏();
+    e.stopPropagation();
+}, true);
