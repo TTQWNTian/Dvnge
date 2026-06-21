@@ -4,13 +4,13 @@
   "files": [
     {
       "path": "game.html",
-      "url": "https://raw.githubusercontent.com/ttqwntian/dvnge/main/templates/default/game.html",
+      "url": "https://raw.githubusercontent.com/ttqwntian/dvnge/main/src/game.html",
       "description": "修复问题",
       "ask": true
     },
     {
       "path": "js/TTQ视觉小说引擎.js",
-      "url": "https://raw.githubusercontent.com/ttqwntian/dvnge/main/templates/default/js/TTQ视觉小说引擎.js",
+      "url": "https://raw.githubusercontent.com/ttqwntian/dvnge/main/src/js/TTQ视觉小说引擎.js",
       "description": "修复bug",
       "ask": false
     }
