@@ -129,23 +129,29 @@ function 解析DVNS(行) {
         } else if (指令.startsWith('位置:')) {
             结果.标题 = 结果.标题 || { 显示: true, 内容: '', 位置: '上' };
             结果.标题.位置 = 指令.replace('位置:', '').trim();
-        } else if (指令.startsWith('跳转:')) {
-            结果.目标 = 指令.replace('跳转:', '').trim();
-        } else if (指令.startsWith('标签:')) {
-            结果.标签 = 指令.replace('标签:', '').trim();
-        } else if (指令.startsWith('跳转章节:')) {
-            const 参数 = 指令.replace('跳转章节:', '').trim();
+        } else if (指令.startsWith('目标:')) {
+            const 参数 = 指令.replace('目标:', '').trim();
             const 部分 = 参数.split(':').map(s => s.trim());
-            const 目标节点 = { 章节: 部分[0] };
-            if (部分.length > 1) {
-                const 目标 = 部分[1];
+            if (部分.length === 1) {
+                const 目标 = 部分[0];
+                if (!isNaN(目标) && 目标 !== '') {
+                    结果.目标 = parseInt(目标);
+                } else {
+                    结果.目标 = 目标;
+                }
+            } else if (部分.length === 2) {
+                const 目标 = 部分[0];
+                const 章节 = 部分[1];
+                const 目标节点 = { 章节: 章节 };
                 if (!isNaN(目标) && 目标 !== '') {
                     目标节点.索引 = parseInt(目标);
-                } else {
+                } else if (目标 !== '') {
                     目标节点.标签 = 目标;
                 }
+                结果.目标 = 目标节点;
             }
-            结果.跳转章节 = 目标节点;
+        } else if (指令.startsWith('标签:')) {
+            结果.标签 = 指令.replace('标签:', '').trim();
         } else if (指令.startsWith('设置变量:')) {
             const kv = 指令.replace('设置变量:', '').split('=').map(s => s.trim());
             if (kv.length === 2) {
