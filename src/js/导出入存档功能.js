@@ -5,7 +5,7 @@
  *
  * Copyright (c) 2025-2026 Tian
  */
-/* TTQ视觉小说引擎v1.9.0-dev */
+/* Dvnge_v1.9.0-dev */
 /* js/导出入存档功能.js */
 function 导出存档() {
     // 收集所有存档数据
