@@ -1,6 +1,6 @@
 # Dvnge 更新日志
 
-## v1.9.0-dev
+## v1.9.1-dev
 ### 新增
 - 增加自创的`.dvns`语法
 - 增加一堆bug
@@ -8,6 +8,9 @@
 
 ### 修复
 - 一些bug
+
+### 更改
+- 把引擎中的 `new Date().toLocaleString(),` 全部换成 `new Date().toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false })` ，不带秒数。
 
 ### 相关修改文件
 - js/TTQ视觉小说引擎.js

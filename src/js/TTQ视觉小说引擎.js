@@ -6,7 +6,7 @@
  * Copyright (c) 2025-2026 Tian
  */
 // js/TTQ视觉小说引擎.js
-// 版本: v1.9.0-dev
+// 版本: v1.9.1-dev
 // 开发者: Tian
 // ⚠️ 对js不熟的不要动这个文件
 
@@ -697,7 +697,7 @@ function 初始化CG存储() {
 function 解锁CG(CG名称, CG路径 = "") {
     const 键名 = 读取配置('CG存储键名', "Dvnge视觉小说引擎_CG收集库");
     const CG库 = JSON.parse(localStorage.getItem(键名)) || {};
-    CG库[CG名称] = { 路径: CG路径, 解锁时间: new Date().toLocaleString() };
+    CG库[CG名称] = { 路径: CG路径, 解锁时间: new Date().toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }) };
     localStorage.setItem(键名, JSON.stringify(CG库));
     return true;
 }
@@ -1816,7 +1816,7 @@ function 更新场景(当前节点) {
                         e.stopPropagation();
                         e.preventDefault();
                         if (!已选记录[选项标识]) {
-                            已选记录[选项标识] = { 时间: new Date().toLocaleString(), 章节: 当前状态.当前章节, 索引: 当前状态.当前索引, 选项文本: 选项.文本 };
+                            已选记录[选项标识] = { 时间: new Date().toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }), 章节: 当前状态.当前章节, 索引: 当前状态.当前索引, 选项文本: 选项.文本 };
                             localStorage.setItem('已选选项记录', JSON.stringify(已选记录));
                             this.classList.add('已选');
                         }
@@ -1976,7 +1976,7 @@ function 处理全局点击(e) {
 // ====================== 存档系统 ======================
 function 生成存档快照() {
     return {
-        时间: new Date().toLocaleString(),
+        时间: new Date().toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }),
         章节: 当前状态.当前章节,
         索引: 当前状态.当前索引,
         背景: 当前状态.背景,

@@ -1,18 +1,18 @@
 {
-  "version": "1.9.0-dev",
-  "date": "2026-06-21",
+  "version": "1.9.1-dev",
+  "date": "2026-06-22",
   "files": [
     {
-      "path": "game.html",
+      "path": "css/样式.css",
       "url": "https://raw.githubusercontent.com/ttqwntian/dvnge/main/src/game.html",
-      "description": "修复问题",
+      "description": "去除圆角",
       "ask": true
     },
     {
       "path": "js/TTQ视觉小说引擎.js",
       "url": "https://raw.githubusercontent.com/ttqwntian/dvnge/main/src/js/TTQ视觉小说引擎.js",
-      "description": "修复bug",
-      "ask": false
+      "description": "记录时间去除秒数",
+      "ask": true
     }
   ]
 }
