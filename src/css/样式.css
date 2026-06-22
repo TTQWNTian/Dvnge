@@ -46,7 +46,6 @@ body {
     pointer-events: none;
 }
 
-/* 对话包装容器 - 用flex布局让头像和对话框并排 */
 #对话包装容器 {
     display: flex;
     align-items: flex-end;
@@ -58,10 +57,10 @@ body {
 #对话框容器 {
     flex: 1;
     background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(5px);
     color: #FCFFE3;
     padding: 15px;
     min-height: 120px;
-    border-radius: 8px;
     z-index: 100;
     will-change: transform, opacity;
     transform: translateZ(0);
@@ -104,7 +103,6 @@ body {
     border: 1px solid #FCFFE3;
     color: #FCFFE3;
     padding: 10px;
-    border-radius: 5px;
     cursor: pointer;
     transition: background 0.3s;
     pointer-events: auto;
@@ -208,7 +206,6 @@ body {
     background: rgba(255, 255, 255, 0.1);
     margin: 10px;
     padding: 15px;
-    border-radius: 10px;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -219,7 +216,6 @@ body {
     padding: 8px 15px;
     background: #889900;
     border: none;
-    border-radius: 5px;
     color: #FCFFE3;
     cursor: pointer;
 }
@@ -277,11 +273,10 @@ body {
 }
 
 .输入框 {
-    background: rgba(255, 255, 255, 0.1);
+    background: transparent;
     border: 1px solid #FCFFE3;
     color: #FCFFE3;
     padding: 12px;
-    border-radius: 5px;
     font-size: 1.1em;
     width: 100%;
 }
@@ -292,7 +287,6 @@ body {
     border: 1px solid #889900;
     color: #889900;
     padding: 8px 20px;
-    border-radius: 5px;
     cursor: pointer;
     transition: all 0.3s;
 }
@@ -392,7 +386,6 @@ body {
     border: 1px solid #889900;
     color: #889900;
     padding: 2px 8px;
-    border-radius: 4px;
     cursor: pointer;
     font-size: 0.9em;
     pointer-events: auto;
@@ -416,6 +409,5 @@ body {
     border: 1px solid #889900;
     color: #889900;
     padding: 6px 10px;
-    border-radius: 4px;
     cursor: pointer;
 }
