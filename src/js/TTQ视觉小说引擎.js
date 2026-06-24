@@ -158,8 +158,8 @@ function 解析DVNS(行) {
                 结果.设置变量 = 结果.设置变量 || {};
                 结果.设置变量[kv[0]] = kv[1];
             }
-        } else if (指令.startsWith('读档设置:')) {
-            const kv = 指令.replace('读档设置:', '').split('=').map(s => s.trim());
+        } else if (指令.startsWith('读档时设置变量:')) {
+            const kv = 指令.replace('读档时设置变量:', '').split('=').map(s => s.trim());
             if (kv.length === 2) {
                 结果.读档时设置变量 = 结果.读档时设置变量 || {};
                 结果.读档时设置变量[kv[0]] = kv[1];
