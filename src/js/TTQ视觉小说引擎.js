@@ -6,7 +6,7 @@
  * Copyright (c) 2025-2026 Tian
  */
 // js/TTQ视觉小说引擎.js
-// 版本: v1.9.1-dev
+// 版本: v1.9.2-dev
 // 开发者: Tian
 // ⚠️ 对js不熟的不要动这个文件
 
@@ -1080,6 +1080,16 @@ function 开始快进() {
         当前状态.快进定时器 = setTimeout(() => {
             当前状态.快进定时器 = null;
             if (当前状态.当前索引 >= 当前章节数据.length - 1) return;
+            
+            const 下一个节点 = 当前章节数据[当前状态.当前索引 + 1];
+            const 下个有交互 = !!(下一个节点?.选项?.length) || !!(下一个节点?.输入) || !!(下一个节点?.调查);
+            if (下个有交互) {
+                当前状态.快进模式 = false;
+                const 快进按钮 = document.getElementById('快进按钮');
+                if (快进按钮) 快进按钮.classList.remove('激活');
+                return;
+            }
+            
             当前状态.当前索引++;
             继续剧情();
         }, 200);
