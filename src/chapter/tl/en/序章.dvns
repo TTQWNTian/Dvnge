@@ -1,4 +1,4 @@
-@输入 占位符=Enter here 提示=Enter your name 按钮=Confirm$
+@输入 占位符=Enter here,提示文字=Enter your name,按钮文字=Confirm$
 "Tian": Who are you? Come use Dvnge.$
 @选项
 Yes
