@@ -155,7 +155,7 @@ function 解析指令行(行) {
             }
             break;
         }
-            
+        
         case '立绘媒体': {
             结果.立绘 = 结果.立绘 || {};
             const 位置映射 = { '左': '左立绘', '中': '中立绘', '右': '右立绘' };
@@ -169,7 +169,7 @@ function 解析指令行(行) {
             };
             break;
         }
-            
+        
         case '头像':
             结果.头像 = {
                 路径: 参数[0],
@@ -214,7 +214,7 @@ function 解析指令行(行) {
             }
             break;
         }
-            
+        
         case '标签':
             结果.标签 = 参数[0];
             break;
@@ -222,19 +222,21 @@ function 解析指令行(行) {
         case '设置': {
             const kv = (参数[0] || '').split('=');
             if (kv.length === 2) {
-                结果.设置变量 = { [kv[0]]: kv[1] };
+                结果.设置变量 = {
+                    [kv[0]]: kv[1] };
             }
             break;
         }
-            
+        
         case '设置!': {
             const kv = (参数[0] || '').split('=');
             if (kv.length === 2) {
-                结果.读档时设置变量 = { [kv[0]]: kv[1] };
+                结果.读档时设置变量 = {
+                    [kv[0]]: kv[1] };
             }
             break;
         }
-            
+        
         case '输入':
             结果.输入 = {
                 变量名: 参数[0] || '',
@@ -1187,56 +1189,68 @@ function 停止快进() {
         clearTimeout(当前状态.快进定时器);
         当前状态.快进定时器 = null;
     }
+    当前状态.快进模式 = false;
 }
 
 function 开始快进() {
     if (!当前状态.快进模式) return;
-    停止快进();
     const 当前章节数据 = 章节库[当前状态.当前章节];
     if (!当前章节数据) return;
     const 当前节点 = 当前章节数据[当前状态.当前索引];
     if (!当前节点) return;
-    const 有交互 = !!(当前节点.选项?.length) || !!(当前节点.输入) || !!(当前节点.调查);
-    if (!有交互) {
-        当前状态.快进定时器 = setTimeout(() => {
-            当前状态.快进定时器 = null;
-            if (当前状态.当前索引 >= 当前章节数据.length - 1) return;
-            
-            const 下一个节点 = 当前章节数据[当前状态.当前索引 + 1];
-            const 下个有交互 = !!(下一个节点?.选项?.length) || !!(下一个节点?.输入) || !!(下一个节点?.调查);
-            if (下个有交互) {
-                当前状态.快进模式 = false;
-                const 快进按钮 = document.getElementById('快进按钮');
-                if (快进按钮) 快进按钮.classList.remove('激活');
-                return;
-            }
-            
+    
+    // 当前节点有交互，不启动快进
+    if (当前节点.选项?.length || 当前节点.输入 || 当前节点.调查) {
+        当前状态.快进模式 = false;
+        const 快进按钮 = document.getElementById('快进按钮');
+        if (快进按钮) 快进按钮.classList.remove('激活');
+        return;
+    }
+    
+    // 已经是最后一个节点，不启动
+    if (当前状态.当前索引 >= 当前章节数据.length - 1) {
+        当前状态.快进模式 = false;
+        const 快进按钮 = document.getElementById('快进按钮');
+        if (快进按钮) 快进按钮.classList.remove('激活');
+        return;
+    }
+    
+    当前状态.快进定时器 = setTimeout(() => {
+        当前状态.快进定时器 = null;
+        if (!当前状态.快进模式) return;
+        if (当前状态.当前索引 >= 当前章节数据.length - 1) {
+            停止快进();
+            return;
+        }
+        // 检查下一个节点
+        const 下一个节点 = 当前章节数据[当前状态.当前索引 + 1];
+        if (下一个节点?.选项?.length || 下一个节点?.输入 || 下一个节点?.调查) {
+            停止快进();
+            const 快进按钮 = document.getElementById('快进按钮');
+            if (快进按钮) 快进按钮.classList.remove('激活');
             当前状态.当前索引++;
             继续剧情();
-        }, 200);
-    }
+            return;
+        }
+        当前状态.当前索引++;
+        继续剧情();
+    }, 200);
 }
 
-function 切换快进模式() {
-    当前状态.快进模式 = !当前状态.快进模式;
-    const 快进按钮 = document.getElementById('快进按钮');
+function 切换快进模式(e) {
+    if (e) e.stopPropagation();
     if (当前状态.快进模式) {
-        开始快进();
-        if (快进按钮) 快进按钮.classList.add('激活');
-        document.addEventListener('click', function 关闭快进(e) {
-            if (e.target.closest('#快进按钮')) return;
-            停止快进();
-            当前状态.快进模式 = false;
-            if (快进按钮) 快进按钮.classList.remove('激活');
-            document.removeEventListener('click', 关闭快进);
-        });
-    } else {
         停止快进();
+        const 快进按钮 = document.getElementById('快进按钮');
         if (快进按钮) 快进按钮.classList.remove('激活');
+        return;
     }
+    当前状态.快进模式 = true;
+    const 快进按钮 = document.getElementById('快进按钮');
+    if (快进按钮) 快进按钮.classList.add('激活');
+    开始快进();
 }
 
-// ====================== 停止音效 ======================
 function 停止当前音效() {
     当前状态.音效.forEach(音效 => {
         try {
