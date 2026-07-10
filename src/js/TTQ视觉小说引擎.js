@@ -6,7 +6,7 @@
  * Copyright (c) 2025-2026 Tian
  */
 // js/TTQ视觉小说引擎.js
-// 版本: v1.9.2-dev
+// 版本: v1.9.3-dev
 // 开发者: Tian
 // ⚠️ 对js不熟的不要动这个文件
 
@@ -60,276 +60,397 @@ function 解析立绘预设(角色名) {
     return 预设[键名] || null;
 }
 
-function 解析DVNS(行) {
-    const 匹配 = 行.match(/^\[([^\]]+)\]/);
-    if (!匹配) return null;
-    const 内容 = 匹配[1];
-    const 结果 = {};
-    const 指令列表 = 内容.split('|').map(s => s.trim());
+function 解析参数(文本) {
+    const 参数 = { _原始: [] };
+    if (!文本) return new Proxy(参数, {
+        get(t, p) { return p in t ? t[p] : (isNaN(p) ? undefined : t._原始[p]); }
+    });
     
-    for (let 指令 of 指令列表) {
-        if (指令.startsWith('背景:')) {
-            结果.背景 = 指令.replace('背景:', '').trim();
-        } else if (指令.startsWith('音乐:')) {
-            结果.音乐 = 指令.replace('音乐:', '').trim();
-        } else if (指令.startsWith('音效:')) {
-            结果.音效 = 指令.replace('音效:', '').trim();
-        } else if (指令.startsWith('立绘:')) {
-            const 部分 = 指令.split(':').map(s => s.trim());
-            if (部分.length >= 3) {
-                结果.立绘 = 结果.立绘 || {};
-                let 位置 = 部分[1];
-                let 值 = 部分[2];
-                let 实际路径 = 值;
-                const 预设路径 = 解析立绘预设(值);
-                if (预设路径) {
-                    实际路径 = 预设路径;
-                }
-                if (位置 === '左') 位置 = '左立绘';
-                else if (位置 === '中') 位置 = '中立绘';
-                else if (位置 === '右') 位置 = '右立绘';
-                if (部分[2] === 'false') {
-                    结果.立绘[位置] = { 隐藏: true };
+    let 当前 = '';
+    let 在引号内 = false;
+    
+    for (const 字符 of 文本) {
+        if (字符 === '"') {
+            在引号内 = !在引号内;
+        } else if (字符 === ' ' && !在引号内) {
+            if (当前) {
+                const 等号位置 = 当前.indexOf('=');
+                if (等号位置 !== -1) {
+                    参数[当前.slice(0, 等号位置)] = 当前.slice(等号位置 + 1);
+                } else if (当前.includes('->')) {
+                    参数._目标 = 当前.split('->')[1].trim();
                 } else {
-                    结果.立绘[位置] = { 路径: 实际路径 };
+                    参数._原始.push(当前);
                 }
+                当前 = '';
             }
-        } else if (指令.startsWith('立绘媒体:')) {
-            const 部分 = 指令.split(':').map(s => s.trim());
-            if (部分.length >= 6) {
-                结果.立绘 = 结果.立绘 || {};
-                let 位置 = 部分[1];
-                if (位置 === '左') 位置 = '左立绘';
-                else if (位置 === '中') 位置 = '中立绘';
-                else if (位置 === '右') 位置 = '右立绘';
-                结果.立绘[位置] = 结果.立绘[位置] || {};
-                结果.立绘[位置].媒体 = {
-                    循环: 部分[2] === 'true',
-                    播放次数: parseInt(部分[3]) || -1,
-                    播放间隔: parseFloat(部分[4]) || 0,
-                    音量: parseFloat(部分[5]) || 1
-                };
-            }
-        } else if (指令.startsWith('头像:')) {
-            const 部分 = 指令.split(':').map(s => s.trim());
-            if (部分.length >= 2) {
-                结果.头像 = { 路径: 部分[1], 位置: 部分[2] || '左' };
-            }
-        } else if (指令.startsWith('标题:')) {
-            const 值 = 指令.replace('标题:', '').trim();
-            if (值 === 'false') {
-                结果.标题 = { 显示: false };
-            } else {
-                结果.标题 = 结果.标题 || { 显示: true, 内容: '', 位置: '上' };
-                结果.标题.内容 = 值;
-            }
-        } else if (指令.startsWith('样式:')) {
-            结果.标题 = 结果.标题 || { 显示: true, 内容: '', 位置: '上' };
-            结果.标题.样式 = 指令.replace('样式:', '').trim();
-        } else if (指令.startsWith('位置:')) {
-            结果.标题 = 结果.标题 || { 显示: true, 内容: '', 位置: '上' };
-            结果.标题.位置 = 指令.replace('位置:', '').trim();
-        } else if (指令.startsWith('目标:')) {
-            const 参数 = 指令.replace('目标:', '').trim();
-            const 部分 = 参数.split(':').map(s => s.trim());
-            if (部分.length === 1) {
-                const 目标 = 部分[0];
-                if (!isNaN(目标) && 目标 !== '') {
-                    结果.目标 = parseInt(目标);
-                } else {
-                    结果.目标 = 目标;
-                }
-            } else if (部分.length === 2) {
-                const 目标 = 部分[0];
-                const 章节 = 部分[1];
-                const 目标节点 = { 章节: 章节 };
-                if (!isNaN(目标) && 目标 !== '') {
-                    目标节点.索引 = parseInt(目标);
-                } else if (目标 !== '') {
-                    目标节点.标签 = 目标;
-                }
-                结果.目标 = 目标节点;
-            }
-        } else if (指令.startsWith('标签:')) {
-            结果.标签 = 指令.replace('标签:', '').trim();
-        } else if (指令.startsWith('设置变量:')) {
-            const kv = 指令.replace('设置变量:', '').split('=').map(s => s.trim());
-            if (kv.length === 2) {
-                结果.设置变量 = 结果.设置变量 || {};
-                结果.设置变量[kv[0]] = kv[1];
-            }
-        } else if (指令.startsWith('读档时设置变量:')) {
-            const kv = 指令.replace('读档时设置变量:', '').split('=').map(s => s.trim());
-            if (kv.length === 2) {
-                结果.读档时设置变量 = 结果.读档时设置变量 || {};
-                结果.读档时设置变量[kv[0]] = kv[1];
-            }
-        } else if (指令.startsWith('输入:')) {
-            const 部分 = 指令.split(':').map(s => s.trim());
-            const 输入对象 = {
-                变量名: 部分[1] || '',
-                占位符: 部分[2] || '',
-                提示文字: 部分[3] || '',
-                按钮文字: 部分[4] || '确定',
-                最大长度: parseInt(部分[5]) || 20,
-                必填: 部分[6] === 'true'
-            };
-            if (!输入对象.提示文字) 输入对象.提示文字 = 输入对象.占位符;
-            结果.输入 = 输入对象;
-        } else if (指令.startsWith('自动存档:')) {
-            结果.自动存档 = 指令.replace('自动存档:', '').trim() === 'true';
-        } else if (指令.startsWith('自动节点:')) {
-            结果.自动节点 = parseFloat(指令.replace('自动节点:', '').trim()) || 0;
-        } else if (指令.startsWith('CG:')) {
-            const 部分 = 指令.split(':').map(s => s.trim());
-            if (部分.length >= 3) {
-                结果.解锁CG = { 名称: 部分[1], 路径: 部分[2] };
-            }
-        } else if (指令 === '调查') {
-            结果.调查 = 结果.调查 || { 区域: [] };
-        } else if (指令.startsWith('光标:')) {
-            结果.调查 = 结果.调查 || { 区域: [] };
-            结果.调查.光标 = 指令.replace('光标:', '').trim();
-        } else if (指令.startsWith('返回:')) {
-            结果.调查 = 结果.调查 || { 区域: [] };
-            结果.调查.返回 = 指令.replace('返回:', '').trim();
-        } else if (指令.startsWith('区域:')) {
-            const 参数 = 指令.replace('区域:', '').trim();
-            const 部分 = 参数.split('^').map(s => s.trim());
-            const 区域对象 = {};
-            for (let p of 部分) {
-                if (p.startsWith('x:')) 区域对象.x = parseInt(p.replace('x:', '').trim()) || 0;
-                else if (p.startsWith('y:')) 区域对象.y = parseInt(p.replace('y:', '').trim()) || 0;
-                else if (p.startsWith('宽:')) 区域对象.宽度 = parseInt(p.replace('宽:', '').trim()) || 100;
-                else if (p.startsWith('高:')) 区域对象.高度 = parseInt(p.replace('高:', '').trim()) || 100;
-                else if (p.startsWith('目标:')) 区域对象.目标 = p.replace('目标:', '').trim();
-                else if (p.startsWith('贴图:')) 区域对象.贴图 = p.replace('贴图:', '').trim();
-            }
-            结果.区域 = 区域对象;
-        } else if (指令.startsWith('跳转HTML:')) {
-            const 部分 = 指令.replace('跳转HTML:', '').trim().split('?');
-            结果.跳转HTML = { 路径: 部分[0] || 'index.html' };
-            if (部分.length > 1) {
-                结果.跳转HTML.参数 = 部分[1];
-            }
-        } else if (指令.startsWith('传递变量:')) {
-            const 变量列表 = 指令.replace('传递变量:', '').split(',').map(s => s.trim());
-            if (结果.跳转HTML) {
-                结果.跳转HTML.传递变量 = 变量列表;
-            }
-        } else if (指令.startsWith('条件:')) {
-            结果.条件 = { 表达式: 指令.replace('条件:', '').trim(), 真目标: null, 假目标: null };
-        } else if (指令.startsWith('真:')) {
-            if (结果.条件) 结果.条件.真目标 = 指令.replace('真:', '').trim();
-        } else if (指令.startsWith('假:')) {
-            if (结果.条件) 结果.条件.假目标 = 指令.replace('假:', '').trim();
-        } else if (指令.startsWith('逐字显示:')) {
-            const 值 = 指令.replace('逐字显示:', '').trim();
-            if (值 === 'false') {
-                结果.逐字显示 = { 启用: false };
-            } else {
-                结果.逐字显示 = { 启用: true, 速度: parseFloat(值) || 0.05 };
-            }
-        } else if (指令.startsWith('打字音效:')) {
-            const 值 = 指令.replace('打字音效:', '').trim();
-            if (值 === 'false') {
-                结果.打字音效 = { 启用: false };
-            } else {
-                const 部分 = 值.split(',').map(s => s.trim());
-                结果.打字音效 = { 启用: true, 路径: 部分[0] || '', 音量: parseFloat(部分[1]) || 1, 间隔字符数: parseInt(部分[2]) || 1 };
-            }
-        } else if (指令.startsWith('快进:')) {
-            结果.快进模式 = 指令.replace('快进:', '').trim() === 'true';
-        } else if (指令.startsWith('音乐淡出:')) {
-            结果.音乐淡出时间 = parseInt(指令.replace('音乐淡出:', '').trim()) || 1000;
-        } else if (指令.startsWith('自定义:')) {
-            结果.自定义功能 = 指令.replace('自定义:', '').trim();
-        } else if (指令.startsWith('动画:')) {
-            const 部分 = 指令.replace('动画:', '').split(',').map(s => s.trim());
-            结果.动画 = 结果.动画 || {};
-            for (let p of 部分) {
-                const kv = p.split(':').map(s => s.trim());
-                if (kv.length === 2) 结果.动画[kv[0]] = kv[1];
-            }
-        } else if (指令.startsWith('背景媒体:')) {
-            const 部分 = 指令.replace('背景媒体:', '').split(',').map(s => s.trim());
-            结果.背景媒体 = { 循环: 部分[0] === 'true', 播放次数: parseInt(部分[1]) || -1, 播放间隔: parseFloat(部分[2]) || 0, 音量: parseFloat(部分[3]) || 1 };
+        } else {
+            当前 += 字符;
         }
     }
+    if (当前) {
+        const 等号位置 = 当前.indexOf('=');
+        if (等号位置 !== -1) {
+            参数[当前.slice(0, 等号位置)] = 当前.slice(等号位置 + 1);
+        } else if (当前.includes('->')) {
+            参数._目标 = 当前.split('->')[1].trim();
+        } else {
+            参数._原始.push(当前);
+        }
+    }
+    
+    return new Proxy(参数, {
+        get(t, p) {
+            if (p in t) return t[p];
+            const i = parseInt(p);
+            return isNaN(i) ? undefined : t._原始[i];
+        }
+    });
+}
+
+function 解析指令行(行) {
+    const 匹配 = 行.match(/^@(\S+)\s*(.*)/);
+    if (!匹配) return null;
+    
+    const 指令名 = 匹配[1];
+    const 参数 = 解析参数(匹配[2]);
+    const 结果 = {};
+    
+    switch (指令名) {
+        case '背景':
+            结果.背景 = 参数[0];
+            break;
+            
+        case '音乐':
+            结果.音乐 = {
+                路径: 参数[0],
+                循环: 参数.循环 !== 'false',
+                音量: parseFloat(参数.音量) || 1,
+                淡出: parseInt(参数.淡出) || 0
+            };
+            break;
+            
+        case '音效':
+            结果.音效 = 参数[0];
+            break;
+            
+        case '立绘': {
+            结果.立绘 = 结果.立绘 || {};
+            const 位置映射 = { '左': '左立绘', '中': '中立绘', '右': '右立绘' };
+            const 位置 = 位置映射[参数[0]] || 参数[0];
+            const 值 = 参数[1];
+            const 实际路径 = 解析立绘预设(值) || 值;
+            
+            if (值 === 'false') {
+                结果.立绘[位置] = { 隐藏: true };
+            } else {
+                结果.立绘[位置] = {
+                    路径: 实际路径,
+                    淡入: parseInt(参数.淡入) || 0,
+                    循环: 参数.循环 === 'true',
+                    次数: parseInt(参数.次数) || -1,
+                    间隔: parseFloat(参数.间隔) || 0,
+                    音量: parseFloat(参数.音量) || 1
+                };
+            }
+            break;
+        }
+            
+        case '立绘媒体': {
+            结果.立绘 = 结果.立绘 || {};
+            const 位置映射 = { '左': '左立绘', '中': '中立绘', '右': '右立绘' };
+            const 位置 = 位置映射[参数[0]] || 参数[0];
+            结果.立绘[位置] = 结果.立绘[位置] || {};
+            结果.立绘[位置].媒体 = {
+                循环: 参数.循环 === 'true',
+                播放次数: parseInt(参数.次数) || -1,
+                播放间隔: parseFloat(参数.间隔) || 0,
+                音量: parseFloat(参数.音量) || 1
+            };
+            break;
+        }
+            
+        case '头像':
+            结果.头像 = {
+                路径: 参数[0],
+                位置: 参数.位置 || 参数[1] || '左'
+            };
+            break;
+            
+        case '标题':
+            if (参数[0] === 'false') {
+                结果.标题 = { 显示: false };
+            } else {
+                结果.标题 = {
+                    显示: true,
+                    内容: 参数[0] || '',
+                    位置: 参数.位置 || '上',
+                    样式: 参数.样式 || ''
+                };
+            }
+            break;
+            
+        case '样式':
+            结果.标题 = 结果.标题 || { 显示: true, 内容: '', 位置: '上' };
+            结果.标题.样式 = 参数[0];
+            break;
+            
+        case '位置':
+            结果.标题 = 结果.标题 || { 显示: true, 内容: '', 位置: '上' };
+            结果.标题.位置 = 参数[0];
+            break;
+            
+        case '目标': {
+            const 目标 = 参数[0];
+            const 章节 = 参数[1];
+            if (章节) {
+                结果.目标 = { 章节 };
+                if (!isNaN(目标) && 目标 !== '') 结果.目标.索引 = parseInt(目标);
+                else if (目标) 结果.目标.标签 = 目标;
+            } else if (!isNaN(目标) && 目标 !== '') {
+                结果.目标 = parseInt(目标);
+            } else {
+                结果.目标 = 目标;
+            }
+            break;
+        }
+            
+        case '标签':
+            结果.标签 = 参数[0];
+            break;
+            
+        case '设置': {
+            const kv = (参数[0] || '').split('=');
+            if (kv.length === 2) {
+                结果.设置变量 = { [kv[0]]: kv[1] };
+            }
+            break;
+        }
+            
+        case '设置!': {
+            const kv = (参数[0] || '').split('=');
+            if (kv.length === 2) {
+                结果.读档时设置变量 = { [kv[0]]: kv[1] };
+            }
+            break;
+        }
+            
+        case '输入':
+            结果.输入 = {
+                变量名: 参数[0] || '',
+                占位符: 参数.占位符 || 参数[1] || '',
+                提示文字: 参数.提示 || 参数[2] || '',
+                按钮文字: 参数.按钮 || '确定',
+                最大长度: parseInt(参数.最大长度) || 20,
+                必填: 参数.必填 === 'true'
+            };
+            if (!结果.输入.提示文字) 结果.输入.提示文字 = 结果.输入.占位符;
+            break;
+            
+        case '存档':
+            结果.自动存档 = 参数.自动 === 'true';
+            break;
+            
+        case '等待':
+            结果.自动节点 = parseFloat(参数[0]) || 0;
+            break;
+            
+        case 'CG':
+            结果.解锁CG = { 名称: 参数[0], 路径: 参数[1] || '' };
+            break;
+            
+        case '调查':
+            结果.调查 = {
+                光标: 参数.光标 || 'default',
+                返回: 参数.返回 || '',
+                区域: []
+            };
+            break;
+            
+        case '区域':
+            结果.区域 = {
+                x: parseInt(参数[0]) || 0,
+                y: parseInt(参数[1]) || 0,
+                宽度: parseInt(参数[2]) || 100,
+                高度: parseInt(参数[3]) || 100,
+                目标: 参数._目标 || 参数.目标 || '',
+                贴图: 参数.贴图 || ''
+            };
+            break;
+            
+        case '跳转HTML':
+            结果.跳转HTML = { 路径: 参数[0] || 'index.html' };
+            if (参数[1]) 结果.跳转HTML.参数 = 参数[1];
+            break;
+            
+        case '传递变量':
+            if (结果.跳转HTML) {
+                结果.跳转HTML.传递变量 = (参数._原始 || []).join(',').split(',').map(s => s.trim());
+            }
+            break;
+            
+        case '条件':
+            结果.条件 = {
+                表达式: 参数[0] || '',
+                真目标: null,
+                假目标: null
+            };
+            break;
+            
+        case '真':
+            if (结果.条件) 结果.条件.真目标 = 参数[0];
+            break;
+            
+        case '假':
+            if (结果.条件) 结果.条件.假目标 = 参数[0];
+            break;
+            
+        case '逐字显示':
+            if (参数[0] === 'false') {
+                结果.逐字显示 = { 启用: false };
+            } else {
+                结果.逐字显示 = { 启用: true, 速度: parseFloat(参数[0]) || 0.05 };
+            }
+            break;
+            
+        case '打字音效':
+            if (参数[0] === 'false') {
+                结果.打字音效 = { 启用: false };
+            } else {
+                结果.打字音效 = {
+                    启用: true,
+                    路径: 参数[0] || '',
+                    音量: parseFloat(参数.音量) || 1,
+                    间隔字符数: parseInt(参数.间隔) || 1
+                };
+            }
+            break;
+            
+        case '快进':
+            结果.快进模式 = 参数[0] === 'true';
+            break;
+            
+        case '音乐淡出':
+            结果.音乐淡出时间 = parseInt(参数[0]) || 1000;
+            break;
+            
+        case '自定义':
+            结果.自定义功能 = 参数[0];
+            break;
+            
+        case '动画':
+            结果.动画 = {};
+            for (const p of 参数._原始) {
+                const kv = p.split(':');
+                if (kv.length === 2) 结果.动画[kv[0]] = kv[1];
+            }
+            break;
+            
+        case '背景媒体':
+            结果.背景媒体 = {
+                循环: 参数[0] === 'true',
+                播放次数: parseInt(参数[1]) || -1,
+                播放间隔: parseFloat(参数[2]) || 0,
+                音量: parseFloat(参数[3]) || 1
+            };
+            break;
+    }
+    
     return Object.keys(结果).length > 0 ? 结果 : null;
 }
 
 function 解析剧本(剧本文本) {
-    const 组数组 = 剧本文本.split('$').map(s => s.trim()).filter(s => s.length > 0);
+    const 块列表 = 剧本文本.split('$').map(s => s.trim()).filter(s => s.length > 0);
     const 节点列表 = [];
     
-    for (let 组 of 组数组) {
-        let 子项数组;
-        if (组.trim().startsWith('[选项:')) {
-            子项数组 = [组.trim()];
-        } else {
-            子项数组 = 组.split('^').map(s => s.trim()).filter(s => s.length > 0);
-        }
+    for (const 块 of 块列表) {
+        const 行列表 = 块.split('\n').map(s => s.trim()).filter(s => s && !s.startsWith('//'));
+        if (!行列表.length) continue;
         
+        const 节点 = {};
         let 当前调查节点 = null;
+        let 在选项中 = false;
+        let 选项列表 = [];
         
-        for (let 子项 of 子项数组) {
-            const 合并行 = 子项.replace(/\n/g, ' ').replace(/\r/g, '').trim();
-            if (!合并行) continue;
-            if (合并行.startsWith('//')) continue;
+        for (let i = 0; i < 行列表.length; i++) {
+            const 行 = 行列表[i];
             
-            if (!合并行.startsWith('[') && !合并行.startsWith('"')) {
-                节点列表.push({ 内容: 合并行 });
+            // 对话行
+            const 对话匹配 = 行.match(/^"([^"]+)"\s*:\s*(.*)/);
+            if (对话匹配) {
+                节点.角色 = 对话匹配[1].trim();
+                节点.内容 = 对话匹配[2].trim();
                 continue;
             }
             
-            if (合并行.startsWith('"')) {
-                const 匹配 = 合并行.match(/^"([^"]+)"\s*:\s*(.*)/);
-                if (匹配) {
-                    节点列表.push({ 角色: 匹配[1].trim(), 内容: 匹配[2].trim() });
+            // @指令
+            if (行.startsWith('@')) {
+                // 选项子项结束
+                if (在选项中) {
+                    if (选项列表.length > 0) 节点.选项 = 选项列表;
+                    在选项中 = false;
                 }
-                continue;
-            }
-            
-            if (合并行.startsWith('[选项:')) {
-                const 匹配 = 合并行.match(/^\[选项:\s*(.+)\]/);
-                if (匹配) {
-                    const 选项内容 = 匹配[1].trim();
-                    const 选项列表 = [];
-                    const 部分数组 = 选项内容.split('/').map(s => s.trim());
-                    for (let 项 of 部分数组) {
-                        if (项.includes(':')) {
-                            const [文本, 目标] = 项.split(':').map(s => s.trim());
-                            选项列表.push({ 文本, 目标 });
-                        } else {
-                            选项列表.push({ 文本: 项, 目标: null });
-                        }
-                    }
-                    if (选项列表.length > 0) {
-                        节点列表.push({ 选项: 选项列表 });
-                    }
+                
+                // 调查区域结束
+                if (当前调查节点 && !行.startsWith('@区域')) {
+                    当前调查节点 = null;
+                }
+                
+                if (行.startsWith('@选项')) {
+                    在选项中 = true;
+                    选项列表 = [];
                     continue;
                 }
+                
+                const 结果 = 解析指令行(行);
+                if (!结果) continue;
+                
+                // 调查节点
+                if (结果.调查) {
+                    当前调查节点 = 结果;
+                    Object.assign(节点, 结果);
+                    continue;
+                }
+                
+                // 区域追加到当前调查
+                if (结果.区域 && 当前调查节点) {
+                    当前调查节点.调查.区域.push(结果.区域);
+                    continue;
+                }
+                
+                Object.assign(节点, 结果);
+                continue;
             }
             
-            const DVNS结果 = 解析DVNS(合并行);
-            if (DVNS结果) {
-                if (DVNS结果.调查) {
-                    当前调查节点 = DVNS结果;
-                    节点列表.push(当前调查节点);
-                } else if (DVNS结果.区域 && 当前调查节点) {
-                    当前调查节点.调查.区域.push(DVNS结果.区域);
-                } else {
-                    const 对话匹配 = 合并行.match(/\]\s*"([^"]+)"\s*:\s*(.*)$/);
-                    if (对话匹配) {
-                        DVNS结果.角色 = 对话匹配[1].trim();
-                        DVNS结果.内容 = 对话匹配[2].trim();
-                    }
-                    节点列表.push(DVNS结果);
+            // 选项子项（缩进或非@开头）
+            if (在选项中) {
+                const 跳转匹配 = 行.match(/^(.+?)\s*->\s*(.+)$/);
+                选项列表.push({
+                    文本: 跳转匹配 ? 跳转匹配[1].trim() : 行,
+                    目标: 跳转匹配 ? 跳转匹配[2].trim() : null
+                });
+                continue;
+            }
+            
+            // 调查区域
+            if (当前调查节点 && 行.startsWith('@区域')) {
+                const 区域结果 = 解析指令行(行);
+                if (区域结果?.区域) {
+                    当前调查节点.调查.区域.push(区域结果.区域);
                 }
                 continue;
             }
+            
+            // 旁白
+            节点.内容 = 行;
         }
+        
+        // 块结束时处理未闭合的选项
+        if (在选项中 && 选项列表.length > 0) {
+            节点.选项 = 选项列表;
+        }
+        
+        节点列表.push(节点);
     }
     
     return 节点列表;

@@ -1,12 +1,12 @@
 {
-  "version": "1.9.2-dev",
-  "date": "2026-06-24",
+  "version": "1.9.3-dev",
+  "date": "2026-7-10",
   "files": [
     {
       "path": "js/TTQ视觉小说引擎.js",
       "url": "https://raw.githubusercontent.com/ttqwntian/dvnge/main/src/js/TTQ视觉小说引擎.js",
-      "description": "修复选项可快进bug",
-      "ask": false
+      "description": "更新dvns语法",
+      "ask": true
     }
   ]
 }
