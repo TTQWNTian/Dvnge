@@ -6,7 +6,7 @@
  * Copyright (c) 2025-2026 Tian
  */
 // js/TTQ视觉小说引擎.js
-// 版本: v1.9.2
+// 版本: v1.9.3
 // 开发者: Tian
 // ⚠️ 对js不熟的不要动这个文件
 
@@ -69,13 +69,13 @@ function 解析参数(文本) {
     const 部分列表 = 文本.split(',').map(s => s.trim());
     
     for (const 部分 of 部分列表) {
-        if (!部分) continue; // 空逗号跳过，使用默认值
+        if (!部分) continue;
         
         if (部分.includes('=')) {
             const 等号位置 = 部分.indexOf('=');
             const 键 = 部分.slice(0, 等号位置).trim();
             const 值 = 部分.slice(等号位置 + 1).trim();
-            if (值 === '') continue; // 值为空，使用默认值
+            if (值 === '') continue;
             参数[键] = 值;
         } else if (部分.includes('->')) {
             参数._目标 = 部分.split('->')[1].trim();
@@ -166,11 +166,21 @@ function 解析指令行(行) {
             if (参数[0] === 'false') {
                 结果.标题 = { 显示: false };
             } else {
+                let 样式 = 参数.样式 || '';
+                if (样式.includes(':')) {
+                    const 样式对象 = {};
+                    样式.split(';').forEach(s => {
+                        const [k, val] = s.split(':').map(s => s.trim());
+                        if (k && val) 样式对象[k] = val;
+                    });
+                    样式 = 样式对象;
+                }
+                
                 结果.标题 = {
                     显示: true,
                     内容: 参数[0] || '',
                     位置: 参数.位置 || '上',
-                    样式: 参数.样式 || ''
+                    样式: 样式
                 };
             }
             break;
@@ -399,14 +409,8 @@ function 解析剧本(剧本文本) {
                             const 键 = 项.slice(0, 等号位置).trim();
                             let 值 = 项.slice(等号位置 + 1).trim();
                             
-                            if ((值.startsWith('"') && 值.endsWith('"')) ||
-                                (值.startsWith("'") && 值.endsWith("'"))) {
-                                值 = 值.slice(1, -1);
-                            }
-                            
                             switch (键) {
                                 case '设置变量':
-                                case '变量':
                                     if (值) {
                                         值.split(',').forEach(v => {
                                             const [k, val] = v.split('=').map(s => s.trim());
@@ -426,16 +430,14 @@ function 解析剧本(剧本文本) {
                                     解锁CG = { 名称: 值, 路径: '' };
                                     break;
                                 case '样式':
-                                    if (值) {
+                                    if (值.includes(':')) {
                                         值.split(';').forEach(s => {
                                             const [k, val] = s.split(':').map(s => s.trim());
                                             if (k && val) 样式[k] = val;
                                         });
+                                    } else {
+                                        样式 = 值;
                                     }
-                                    break;
-                                case 'class':
-                                case '类':
-                                    样式.class = 值;
                                     break;
                             }
                         }
@@ -1622,11 +1624,9 @@ function 更新场景(当前节点) {
             标题容器.textContent = 标题内容;
             if (标题设置.样式) {
                 if (typeof 标题设置.样式 === 'string') {
-                    标题容器.style.cssText = 标题设置.样式;
+                    标题容器.className += ' ' + 标题设置.样式;
                 } else {
-                    Object.entries(标题设置.样式).forEach(([属性, 值]) => {
-                        标题容器.style[属性] = 值;
-                    });
+                    Object.assign(标题容器.style, 标题设置.样式);
                 }
             } else {
                 标题容器.style.cssText = '';
@@ -1988,7 +1988,13 @@ function 更新场景(当前节点) {
                         try { 变量路径.forEach(段 => 值 = 值?.[段]); return 值 !== undefined && 值 !== null ? 值 : ''; } catch { return ''; }
                     });
                     选项按钮.textContent = 选项文本;
-                    if (选项.样式) Object.assign(选项按钮.style, 选项.样式);
+                    if (选项.样式) {
+                        if (typeof 选项.样式 === 'string') {
+                            选项按钮.className += ' ' + 选项.样式;
+                        } else {
+                            Object.assign(选项按钮.style, 选项.样式);
+                        }
+                    }
                     const 选项标识 = `${当前状态.当前章节}_${当前状态.当前索引}_${索引}`;
                     if (已选记录[选项标识]) 选项按钮.classList.add('已选');
                     选项按钮.addEventListener('click', function(e) {
