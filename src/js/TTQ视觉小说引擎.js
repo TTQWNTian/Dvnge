@@ -198,7 +198,8 @@ function 解析指令行(行) {
             const [键, 值] = (参数[0] || '').split('=');
             if (键 && 值 !== undefined) {
                 结果.设置变量 = {
-                    [键.trim()]: 值.trim() };
+                    [键.trim()]: 值.trim()
+                };
             }
             break;
         }
@@ -207,7 +208,8 @@ function 解析指令行(行) {
             const [键, 值] = (参数[0] || '').split('=');
             if (键 && 值 !== undefined) {
                 结果.读档时设置变量 = {
-                    [键.trim()]: 值.trim() };
+                    [键.trim()]: 值.trim()
+                };
             }
             break;
         }
@@ -407,7 +409,7 @@ function 解析剧本(剧本文本) {
                                 case '变量':
                                     if (值) {
                                         值.split(',').forEach(v => {
-                                            const [k, val] = v.split(':').map(s => s.trim());
+                                            const [k, val] = v.split('=').map(s => s.trim());
                                             if (k && val !== undefined) {
                                                 设置变量[k] = val;
                                             }
@@ -2141,6 +2143,15 @@ function 处理全局点击(e) {
     const 正在打字 = document.querySelector('.内容')?.dataset.正在打字 === 'true';
     if (正在打字) {
         return;
+    }
+    
+    if (当前状态.快进模式) {
+        停止快进();
+    }
+    
+    if (当前状态.当前索引 < 当前章节数据.length - 1) {
+        当前状态.当前索引++;
+        更新场景(当前章节数据[当前状态.当前索引]);
     }
 }
 // ====================== 存档系统 ======================
