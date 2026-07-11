@@ -407,7 +407,7 @@ function 解析剧本(剧本文本) {
                             const 等号位置 = 项.indexOf('=');
                             if (等号位置 === -1) continue;
                             const 键 = 项.slice(0, 等号位置).trim();
-                            let 值 = 项.slice(等号位置 + 1).trim();
+                            const 值 = 项.slice(等号位置 + 1).trim(); // 直接取值，不处理引号
                             
                             switch (键) {
                                 case '设置变量':
@@ -447,7 +447,6 @@ function 解析剧本(剧本文本) {
                         文本: 选项文本,
                         目标: 目标部分 || null
                     };
-                    
                     if (Object.keys(设置变量).length > 0) 选项对象.设置变量 = 设置变量;
                     if (条件) 选项对象.条件 = 条件;
                     if (否则目标) 选项对象.否则目标 = 否则目标;
@@ -456,10 +455,81 @@ function 解析剧本(剧本文本) {
                     
                     选项列表.push(选项对象);
                 } else {
-                    选项列表.push({
-                        文本: 行,
-                        目标: null
-                    });
+                    const 属性匹配 = 行.match(/^(.+?)\s*,\s*(.+)$/);
+                    if (属性匹配) {
+                        const 选项文本 = 属性匹配[1].trim();
+                        const 属性字符串 = 属性匹配[2].trim();
+                        let 设置变量 = {};
+                        let 条件 = null;
+                        let 解锁CG = null;
+                        let 样式 = {};
+                        
+                        const 属性项列表 = [];
+                        let 当前项 = '';
+                        let 在引号内 = false;
+                        for (const 字符 of 属性字符串) {
+                            if (字符 === '"') 在引号内 = !在引号内;
+                            if (字符 === ',' && !在引号内) {
+                                属性项列表.push(当前项.trim());
+                                当前项 = '';
+                            } else {
+                                当前项 += 字符;
+                            }
+                        }
+                        if (当前项.trim()) 属性项列表.push(当前项.trim());
+                        
+                        for (const 项 of 属性项列表) {
+                            const 等号位置 = 项.indexOf('=');
+                            if (等号位置 === -1) continue;
+                            const 键 = 项.slice(0, 等号位置).trim();
+                            const 值 = 项.slice(等号位置 + 1).trim(); // 直接取值，不处理引号
+                            
+                            switch (键) {
+                                case '设置变量':
+                                    if (值) {
+                                        值.split(',').forEach(v => {
+                                            const [k, val] = v.split('=').map(s => s.trim());
+                                            if (k && val !== undefined) {
+                                                设置变量[k] = val;
+                                            }
+                                        });
+                                    }
+                                    break;
+                                case '条件':
+                                    条件 = 值;
+                                    break;
+                                case '解锁CG':
+                                    解锁CG = { 名称: 值, 路径: '' };
+                                    break;
+                                case '样式':
+                                    if (值.includes(':')) {
+                                        值.split(';').forEach(s => {
+                                            const [k, val] = s.split(':').map(s => s.trim());
+                                            if (k && val) 样式[k] = val;
+                                        });
+                                    } else {
+                                        样式 = 值;
+                                    }
+                                    break;
+                            }
+                        }
+                        
+                        const 选项对象 = {
+                            文本: 选项文本,
+                            目标: null
+                        };
+                        if (Object.keys(设置变量).length > 0) 选项对象.设置变量 = 设置变量;
+                        if (条件) 选项对象.条件 = 条件;
+                        if (解锁CG) 选项对象.解锁CG = 解锁CG;
+                        if (Object.keys(样式).length > 0) 选项对象.样式 = 样式;
+                        
+                        选项列表.push(选项对象);
+                    } else {
+                        选项列表.push({
+                            文本: 行,
+                            目标: null
+                        });
+                    }
                 }
                 continue;
             }
