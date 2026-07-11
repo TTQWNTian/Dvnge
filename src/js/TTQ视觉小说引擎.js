@@ -422,7 +422,6 @@ function 解析剧本(剧本文本) {
                                 case '否则':
                                     否则目标 = 值;
                                     break;
-                                case 'CG':
                                 case '解锁CG':
                                     解锁CG = { 名称: 值, 路径: '' };
                                     break;
