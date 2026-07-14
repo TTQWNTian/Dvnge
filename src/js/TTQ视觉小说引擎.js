@@ -2123,6 +2123,10 @@ function 处理全局点击(e) {
     
     const 正在打字 = document.querySelector(".内容")?.dataset.正在打字 === "true";
     if (正在打字) {
+        const 完整内容 = document.querySelector(".内容")?.dataset.完整内容 || "";
+        if (完整内容.includes('<wait')) {
+            return;
+        }
         停止打字效果();
         return;
     }
@@ -2140,6 +2144,7 @@ function 处理全局点击(e) {
         更新场景(当前章节数据[当前状态.当前索引]);
     }
 }
+
 // ====================== 存档系统 ======================
 function 生成存档快照() {
     return {
