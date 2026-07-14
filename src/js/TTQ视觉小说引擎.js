@@ -6,7 +6,7 @@
  * Copyright (c) 2025-2026 Tian
  */
 // js/TTQ视觉小说引擎.js
-// 版本: v1.9.5
+// 版本: v1.9.6
 // 开发者: Tian
 // ⚠️ 对js不熟的不要动这个文件
 
@@ -51,15 +51,6 @@ function 读取配置(键名, 默认值) {
 const 章节库 = {};
 
 // ====================== 剧本解析器 ======================
-function 解析立绘预设(角色名) {
-    const 预设表 = 读取配置('立绘预设', {});
-    if (!预设表[角色名]) return null;
-    const 预设 = 预设表[角色名];
-    if (typeof 预设 === 'string') return 预设;
-    const 键名 = Object.keys(预设)[0];
-    return 预设[键名] || null;
-}
-
 function 解析参数(文本) {
     const 参数 = { _原始: [] };
     if (!文本) return new Proxy(参数, {
@@ -220,10 +211,19 @@ function 解析指令行(行) {
         
         case '输入': {
             const 原始参数 = 匹配[2];
-            const 第一个空格 = 原始参数.indexOf(' ');
-            const 变量名 = 第一个空格 === -1 ? 原始参数 : 原始参数.slice(0, 第一个空格);
+            const 分割符位置 = 原始参数.search(/[ ,]/);
+            let 变量名 = 原始参数;
+            let 参数文本 = '';
+            if (分割符位置 !== -1) {
+                变量名 = 原始参数.slice(0, 分割符位置).trim();
+                参数文本 = 原始参数.slice(分割符位置 + 1).trim();
+            } else {
+                变量名 = 原始参数.trim();
+                参数文本 = '';
+            }
+            const 参数 = 解析参数(参数文本);
             结果.输入 = {
-                变量名: 变量名.trim(),
+                变量名: 变量名,
                 占位符: 参数.占位符 || '',
                 提示文字: 参数.提示文字 || '',
                 按钮文字: 参数.按钮文字 || '确定',
@@ -1199,7 +1199,8 @@ function 开始逐字显示(内容元素, 完整文本, 速度, 当前节点) {
         当前状态.逐字显示.打字已完成 = false;
     }
     内容元素.dataset.正在打字 = 'true';
-    document.removeEventListener('click', 处理全局点击);
+    内容元素.dataset.完整内容 = 完整文本;
+    当前状态.打字中 = true;
     
     let 打字音效对象 = null;
     if (当前状态.打字音效 && 当前状态.打字音效.启用 && 当前状态.打字音效.路径) {
@@ -1282,6 +1283,8 @@ function 开始逐字显示(内容元素, 完整文本, 速度, 当前节点) {
         if (当前索引 >= 显示结构.length) {
             内容元素.innerHTML = 完整文本;
             内容元素.dataset.正在打字 = 'false';
+            delete 内容元素.dataset.完整内容;
+            当前状态.打字中 = true;
             if (当前状态.逐字显示) {
                 当前状态.逐字显示.打字已完成 = true;
             }
@@ -1292,11 +1295,6 @@ function 开始逐字显示(内容元素, 完整文本, 速度, 当前节点) {
             if (当前状态.逐字显示 && 当前状态.逐字显示.打字定时器) {
                 clearTimeout(当前状态.逐字显示.打字定时器);
                 当前状态.逐字显示.打字定时器 = null;
-            }
-            if (!当前节点.选项?.length && !当前节点.输入) {
-                if (!当前节点.自动节点 || 当前节点.自动节点 <= 0) {
-                    setTimeout(() => { document.addEventListener('click', 处理全局点击); }, 0);
-                }
             }
             return;
         }
@@ -1344,18 +1342,21 @@ function 开始逐字显示(内容元素, 完整文本, 速度, 当前节点) {
 }
 
 function 停止打字效果() {
+    if (当前状态.自动节点 > 0) {
+        return;
+    }
     if (当前状态.逐字显示 && 当前状态.逐字显示.打字定时器) {
         clearTimeout(当前状态.逐字显示.打字定时器);
         当前状态.逐字显示.打字定时器 = null;
     }
     if (当前状态.逐字显示) {
-        当前状态.逐字显示.打字已完成 = false;
+        当前状态.逐字显示.打字已完成 = true;
     }
-    const 内容元素 = document.querySelector('.内容');
-    if (内容元素 && 内容元素.dataset.正在打字 === 'true') {
-        const 完整内容 = 内容元素.dataset.完整内容 || '';
+    const 内容元素 = document.querySelector(".内容");
+    if (内容元素 && 内容元素.dataset.正在打字 === "true") {
+        const 完整内容 = 内容元素.dataset.完整内容 || "";
         内容元素.innerHTML = 完整内容;
-        内容元素.dataset.正在打字 = 'false';
+        内容元素.dataset.正在打字 = "false";
     }
 }
 
@@ -1412,20 +1413,6 @@ function 开始快进() {
         当前状态.当前索引++;
         开始快进();
     }, 200);
-}
-
-function 切换快进模式(e) {
-    if (e) e.stopPropagation();
-    if (当前状态.快进模式) {
-        停止快进();
-        const 快进按钮 = document.getElementById('快进按钮');
-        if (快进按钮) 快进按钮.classList.remove('激活');
-        return;
-    }
-    当前状态.快进模式 = true;
-    const 快进按钮 = document.getElementById('快进按钮');
-    if (快进按钮) 快进按钮.classList.add('激活');
-    开始快进();
 }
 
 function 切换快进模式(e) {
@@ -1591,17 +1578,15 @@ function 更新场景(当前节点) {
     
     if (节点.自动节点 && 节点.自动节点 > 0) {
         当前状态.自动节点 = 节点.自动节点;
-        document.removeEventListener('click', 处理全局点击);
         当前状态.自动节点定时器 = setTimeout(() => {
+            当前状态.自动节点 = 0;
             当前状态.当前索引++;
             继续剧情();
         }, 节点.自动节点 * 1000);
     } else {
-        if (!节点.选项?.length && !节点.输入) {
-            document.addEventListener('click', 处理全局点击);
-        }
         当前状态.自动节点 = 0;
     }
+    
     
     if (节点.设置变量) {
         Object.entries(节点.设置变量).forEach(([变量路径, 值]) => {
@@ -1884,7 +1869,6 @@ function 更新场景(当前节点) {
     
     if (节点.调查) {
         const 调查设置 = 节点.调查;
-        document.removeEventListener('click', 处理全局点击);
         if (存档按钮) 存档按钮.classList.add('隐藏');
         if (返回按钮) 返回按钮.classList.remove('隐藏');
         if (返回按钮) {
@@ -1895,7 +1879,6 @@ function 更新场景(当前节点) {
                 document.body.style.cursor = 'default';
                 if (存档按钮) 存档按钮.classList.remove('隐藏');
                 if (返回按钮) 返回按钮.classList.add('隐藏');
-                document.addEventListener('click', 处理全局点击);
                 const 返回目标 = 节点.调查?.返回;
                 if (返回目标 !== undefined) {
                     if (typeof 返回目标 === 'number') {
@@ -1941,7 +1924,6 @@ function 更新场景(当前节点) {
                     document.body.style.cursor = 'default';
                     if (存档按钮) 存档按钮.classList.remove('隐藏');
                     if (返回按钮) 返回按钮.classList.add('隐藏');
-                    document.addEventListener('click', 处理全局点击);
                     const 目标 = 区域.目标;
                     if (typeof 目标 === 'number') {
                         当前状态.当前索引 = 目标;
@@ -2038,11 +2020,6 @@ function 更新场景(当前节点) {
                 内容元素.innerHTML = 处理后的内容;
                 if (节点.动画?.内容) 应用动画(内容元素, 节点.动画.内容);
                 else if (节点.动画?.内容文字) 应用动画(内容元素, 节点.动画.内容文字);
-                if (!节点.选项?.length && !节点.输入) {
-                    if (!节点.自动节点 || 节点.自动节点 <= 0) {
-                        document.addEventListener('click', 处理全局点击);
-                    }
-                }
             }
             
             const 选项容器 = 容器.querySelector('.选项容器');
@@ -2086,7 +2063,6 @@ function 更新场景(当前节点) {
                     });
                     选项容器.appendChild(选项按钮);
                 });
-                document.removeEventListener('click', 处理全局点击);
             }
             
             if (节点.动画?.对话框) {
@@ -2098,7 +2074,6 @@ function 更新场景(当前节点) {
     }
     
     if (节点.输入) {
-        document.removeEventListener('click', 处理全局点击);
         const 输入容器 = document.createElement('div');
         输入容器.className = '输入容器';
         if (节点.输入.提示文字) {
@@ -2213,8 +2188,9 @@ function 处理全局点击(e) {
         return;
     }
     
-    const 正在打字 = document.querySelector('.内容')?.dataset.正在打字 === 'true';
+    const 正在打字 = document.querySelector(".内容")?.dataset.正在打字 === "true";
     if (正在打字) {
+        停止打字效果();
         return;
     }
     
@@ -2225,6 +2201,10 @@ function 处理全局点击(e) {
     if (当前状态.当前索引 < 当前章节数据.length - 1) {
         当前状态.当前索引++;
         更新场景(当前章节数据[当前状态.当前索引]);
+    }
+    
+    if (当前状态.自动节点 > 0) {
+        return;
     }
 }
 // ====================== 存档系统 ======================
@@ -2512,7 +2492,6 @@ async function 初始化引擎() {
     const 初始状态配置 = 读取配置('初始状态');
     const 语言配置数据 = 读取配置('语言配置');
     
-    // 从这里开始直接处理语言
     当前语言 = localStorage.getItem(存储键名.语言) || null;
     语言配置表 = 语言配置数据;
     
@@ -2530,6 +2509,8 @@ async function 初始化引擎() {
     if (章节库.序章?.length) {
         切换章节('序章', 0);
     }
+    
+    document.addEventListener("click", 处理全局点击);
 }
 // 自动初始化
 if (document.readyState === 'loading') {
