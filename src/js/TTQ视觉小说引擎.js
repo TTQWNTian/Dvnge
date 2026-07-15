@@ -2491,29 +2491,38 @@ function 关闭存档界面() {
 // ====================== 引擎初始化 ======================
 async function 初始化引擎() {
     await 等待配置加载();
-    
+
     const 存储键名 = 读取配置('存储键名');
     const 初始状态配置 = 读取配置('初始状态');
     const 语言配置数据 = 读取配置('语言配置');
-    
+
     当前语言 = localStorage.getItem(存储键名.语言) || null;
     语言配置表 = 语言配置数据;
-    
+
     if (!当前语言 || !语言配置表.语言列表[当前语言]) {
         当前语言 = 语言配置表.默认语言;
     }
-    
+
     当前状态 = JSON.parse(JSON.stringify(初始状态配置));
-    
+
     初始化CG存储();
     从本地存储加载用户变量();
     await 加载所有章节();
     刷新界面文字();
-    
-    if (章节库.序章?.length) {
+
+    const url参数 = new URLSearchParams(window.location.search);
+    const 存档标识 = url参数.get('存档');
+
+    if (存档标识 === 'auto') {
+        加载自动存档();
+    } else if (存档标识) {
+        加载指定存档(parseInt(存档标识));
+    }
+
+    if (!存档标识 && 章节库.序章?.length) {
         切换章节('序章', 0);
     }
-    
+
     document.addEventListener("click", 处理全局点击);
 }
 // 自动初始化
