@@ -2,6 +2,30 @@
 /* css/样式.css */
 /* 基础样式 */
 
+:root {
+    /* 主色调 */
+    --color-primary: #889900;
+    --color-primary-dim: rgba(136, 153, 0, 0.5);
+    
+    /* 文本颜色 */
+    --color-text: #FCFFE3;
+    --color-text-light: #ffffff;
+    
+    /* 背景色 */
+    --color-bg-body: #222222;
+    --color-bg-dark: rgba(0, 0, 0, 0.8);
+    --color-bg-darker: rgba(0, 0, 0, 0.95);
+    --color-bg-hover: rgba(255, 255, 255, 0.1);
+    --color-bg-hover-strong: rgba(255, 255, 255, 0.2);
+    
+    /* 边框色 */
+    --color-border: #FCFFE3;
+    --color-border-primary: #889900;
+    
+    /* 阴影 */
+    --shadow-text: 0px 2px 2px rgba(0, 0, 0, 0.3);
+}
+
 * {
     -webkit-tap-highlight-color: transparent;
     outline: none;
@@ -16,7 +40,7 @@
 body {
     margin: 0;
     height: 100vh;
-    background: #222;
+    background: var(--color-bg-body);
     cursor: pointer;
     background-size: cover;
     background-position: center;
@@ -56,9 +80,9 @@ body {
 
 #对话框容器 {
     flex: 1;
-    background: rgba(0, 0, 0, 0.8);
+    background: var(--color-bg-dark);
     backdrop-filter: blur(5px);
-    color: #FCFFE3;
+    color: var(--color-text);
     padding: 15px;
     min-height: 120px;
     z-index: 100;
@@ -83,7 +107,7 @@ body {
 .角色 {
     font-weight: bold;
     margin-bottom: 10px;
-    color: #889900;
+    color: var(--color-primary);
 }
 
 .内容 {
@@ -99,9 +123,9 @@ body {
 }
 
 .选项按钮 {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid #FCFFE3;
-    color: #FCFFE3;
+    background: var(--color-bg-hover);
+    border: 1px solid var(--color-border);
+    color: var(--color-text);
     padding: 10px;
     cursor: pointer;
     transition: background 0.3s;
@@ -109,7 +133,7 @@ body {
 }
 
 .选项按钮:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: var(--color-bg-hover-strong);
 }
 
 .选项按钮.已选 {
@@ -146,7 +170,7 @@ body {
     font-size: 1.2em;
     background: transparent;
     border: none;
-    color: #fff;
+    color: var(--color-text-light);
     z-index: 102;
     cursor: pointer;
     pointer-events: auto;
@@ -161,7 +185,7 @@ body {
     font-size: 1.2em;
     background: transparent;
     border: none;
-    color: #fff;
+    color: var(--color-text-light);
     z-index: 102;
     cursor: pointer;
     pointer-events: auto;
@@ -175,7 +199,7 @@ body {
     font-size: 1.2em;
     background: transparent;
     border: none;
-    color: #fff;
+    color: var(--color-text-light);
     z-index: 102;
     cursor: pointer;
     pointer-events: auto;
@@ -188,8 +212,8 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.95);
-    color: #FCFFE3;
+    background: var(--color-bg-darker);
+    color: var(--color-text);
     padding: 20px 10px;
     overflow-y: auto;
     z-index: 200;
@@ -203,7 +227,7 @@ body {
 }
 
 .存档项 {
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--color-bg-hover);
     margin: 10px;
     padding: 15px;
     display: flex;
@@ -214,9 +238,9 @@ body {
 
 .加载按钮 {
     padding: 8px 15px;
-    background: #889900;
+    background: var(--color-primary);
     border: none;
-    color: #FCFFE3;
+    color: var(--color-text);
     cursor: pointer;
 }
 
@@ -227,7 +251,7 @@ body {
     font-size: 2em;
     background: none;
     border: none;
-    color: #FCFFE3;
+    color: var(--color-text);
     cursor: pointer;
     transition: all 0.3s ease;
     width: 40px;
@@ -240,8 +264,8 @@ body {
 }
 
 .关闭按钮:hover {
-    color: #889900;
-    background: rgba(255, 255, 255, 0.1);
+    color: var(--color-primary);
+    background: var(--color-bg-hover);
     transform: rotate(90deg);
 }
 
@@ -251,8 +275,8 @@ body {
     top: 20px;
     left: 50%;
     transform: translateX(-50%);
-    background: rgba(0, 0, 0, 0.8);
-    color: #889900;
+    background: var(--color-bg-dark);
+    color: var(--color-primary);
     padding: 12px 24px;
     border-radius: 25px;
     font-size: 14px;
@@ -274,8 +298,8 @@ body {
 
 .输入框 {
     background: transparent;
-    border: 1px solid #FCFFE3;
-    color: #FCFFE3;
+    border: 1px solid var(--color-border);
+    color: var(--color-text);
     padding: 12px;
     font-size: 1.1em;
     width: 100%;
@@ -283,17 +307,17 @@ body {
 
 .输入确认按钮 {
     align-self: flex-end;
-    background: rgba(136, 153, 0, 0.5);
-    border: 1px solid #889900;
-    color: #889900;
+    background: var(--color-primary-dim);
+    border: 1px solid var(--color-border-primary);
+    color: var(--color-primary);
     padding: 8px 20px;
     cursor: pointer;
     transition: all 0.3s;
 }
 
 .输入确认按钮:active {
-    color: #FCFFE3;
-    background: #889900;
+    color: var(--color-text);
+    background: var(--color-primary);
 }
 
 .输入提示文字 {
@@ -304,10 +328,10 @@ body {
 /* 标题样式 */
 .标题容器 {
     position: fixed;
-    color: white;
+    color: var(--color-text-light);
     font-size: 28px;
     margin: 0 auto;
-    text-shadow: 0px 2px 2px rgba(0, 0, 0, 0.3);
+    text-shadow: var(--shadow-text);
     font-weight: bold;
     text-align: center;
     max-width: 80%;
@@ -383,8 +407,8 @@ body {
 
 #功能栏 button {
     background: none;
-    border: 1px solid #889900;
-    color: #889900;
+    border: 1px solid var(--color-border-primary);
+    color: var(--color-primary);
     padding: 2px 8px;
     cursor: pointer;
     font-size: 0.9em;
@@ -393,7 +417,7 @@ body {
 }
 
 #功能栏 button.激活 {
-    background: rgba(136, 153, 0, 0.5);
+    background: var(--color-primary-dim);
 }
 
 .存档操作栏 {
@@ -406,8 +430,41 @@ body {
 
 .存档操作栏 button {
     background: none;
-    border: 1px solid #889900;
-    color: #889900;
+    border: 1px solid var(--color-border-primary);
+    color: var(--color-primary);
     padding: 6px 10px;
     cursor: pointer;
+}
+
+@keyframes 提示浮现 {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+@keyframes 标题进入 {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes 标题退出 {
+    from {
+        opacity: 1;
+        transform: scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: scale(0.9);
+    }
 }
