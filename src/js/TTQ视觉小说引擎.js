@@ -111,13 +111,14 @@ function 解析指令行(行) {
             break;
             
         case '立绘': {
-            结果.立绘 = 结果.立绘;
+            结果.立绘 = 结果.立绘 || {};
             const 位置映射 = { '左': '左立绘', '中': '中立绘', '右': '右立绘' };
-            const 位置 = 位置映射[参数[0]];
-            const 值 = 参数[1];
-            const 实际路径 = 解析立绘预设(值);
+            const 位置 = 位置映射[参数[0]] || 参数[0];
+            const 角色名 = 参数[1];
+            const 预设名 = 参数[2];
+            const 实际路径 = 解析立绘预设(角色名, 预设名) || 角色名;
             
-            if (值 === 'false') {
+            if (角色名 === 'false') {
                 结果.立绘[位置] = { 隐藏: true };
             } else {
                 结果.立绘[位置] = {
@@ -133,9 +134,9 @@ function 解析指令行(行) {
         }
         
         case '立绘媒体': {
-            结果.立绘 = 结果.立绘;
+            结果.立绘 = 结果.立绘 || {};
             const 位置映射 = { '左': '左立绘', '中': '中立绘', '右': '右立绘' };
-            const 位置 = 位置映射[参数[0]];
+            const 位置 = 位置映射[参数[0]] || 参数[0];
             结果.立绘[位置] = 结果.立绘[位置];
             结果.立绘[位置].媒体 = {
                 循环: 参数.循环 !== 'false',
@@ -157,7 +158,7 @@ function 解析指令行(行) {
             if (参数[0] === 'false') {
                 结果.标题 = { 显示: false };
             } else {
-                let 样式 = 参数.样式;
+                let 样式 = 参数.样式 || '';
                 if (样式.includes(':')) {
                     const 样式对象 = {};
                     样式.split(';').forEach(s => {
@@ -178,7 +179,7 @@ function 解析指令行(行) {
             
         case '目标': {
             const 目标 = 参数[0];
-            const 章节 = 参数.章节;
+            const 章节 = 参数.章节 || 参数[1];
             if (章节) {
                 结果.目标 = { 章节 };
                 if (!isNaN(目标) && 目标 !== '') 结果.目标.索引 = parseInt(目标);
@@ -437,7 +438,7 @@ function 解析剧本(剧本文本) {
                     
                     const 选项对象 = {
                         文本: 选项文本,
-                        目标: 目标部分
+                        目标: 目标部分 || null
                     };
                     if (Object.keys(设置变量).length > 0) 选项对象.设置变量 = 设置变量;
                     if (条件) 选项对象.条件 = 条件;
@@ -528,8 +529,8 @@ function 解析剧本(剧本文本) {
                     y: parseInt(区域参数.y) || parseInt(区域参数[1]),
                     宽度: parseInt(区域参数.宽) || parseInt(区域参数[2]),
                     高度: parseInt(区域参数.高) || parseInt(区域参数[3]),
-                    目标: 区域参数.目标,
-                    贴图: 区域参数.贴图
+                    目标: 区域参数.目标 || '',
+                    贴图: 区域参数.贴图 || ''
                 });
                 continue;
             }
@@ -1132,7 +1133,6 @@ function 应用动画(元素, animation值) {
     元素.style.animation = animation值;
 }
 
-// ====================== 核心引擎 ======================
 function 切换章节(新章节名称, 起始索引 = 0, 选项 = {}) {
     if (typeof 起始索引 === 'string') {
         const 目标章节数据 = 章节库[新章节名称];
@@ -1392,8 +1392,7 @@ function 停止打字效果() {
                 音效.pause();
                 音效.currentTime = 0;
             }
-        } catch (e) {
-        }
+        } catch (e) {}
     }
     const 内容元素 = document.querySelector(".内容");
     if (内容元素 && 内容元素.dataset.正在打字 === "true") {
@@ -1746,9 +1745,8 @@ function 更新场景(当前节点) {
         if (节点立绘.路径) {
             let 解析路径 = 节点立绘.路径;
             解析路径 = 替换变量(解析路径, '');
-            if (节点立绘.媒体) {
-                当前状态[位置].媒体 = { ...当前状态[位置].媒体, ...节点立绘.媒体 };
-            }
+            const 配置立绘 = 读取配置('初始状态')[位置] || {};
+            const 淡入时间 = 节点立绘.淡入 !== undefined ? 节点立绘.淡入 : 配置立绘.淡入;
             const 视频扩展名 = ['mp4', 'webm', 'ogg', 'mov'];
             const 文件扩展名 = 解析路径.split('.').pop().toLowerCase();
             if (视频扩展名.includes(文件扩展名)) {
@@ -1758,12 +1756,10 @@ function 更新场景(当前节点) {
                     视频元素.className = 元素.className;
                     视频元素.style.cssText = 元素.style.cssText;
                     视频元素.poster = '你的视频封面图片.png';
-                    const 目标音量 = 当前状态[位置].媒体.音量 ?? 1;
+                    const 目标音量 = 当前状态[位置].媒体.音量 !== undefined ? 当前状态[位置].媒体.音量 : 1;
                     视频元素.dataset.目标音量 = 目标音量;
-                    
                     视频元素.volume = 目标音量;
                     视频元素.muted = (目标音量 === 0);
-                    
                     视频元素.playsInline = true;
                     视频元素.autoplay = true;
                     元素.parentNode.replaceChild(视频元素, 元素);
@@ -1784,7 +1780,15 @@ function 更新场景(当前节点) {
                 元素.play().catch(e => console.log('视频播放失败:', e));
                 控制视频播放(元素, 当前状态[位置].媒体);
             }
-            元素.style.opacity = 1;
+            if (淡入时间 !== undefined && 淡入时间 > 0) {
+                元素.style.opacity = 0;
+                元素.style.transition = `opacity ${淡入时间}ms ease`;
+                requestAnimationFrame(() => {
+                    元素.style.opacity = 1;
+                });
+            } else {
+                元素.style.opacity = 1;
+            }
             当前状态[位置].显示 = true;
             当前状态[位置].路径 = 节点立绘.路径;
         } else if (节点立绘.隐藏) {
@@ -2491,38 +2495,38 @@ function 关闭存档界面() {
 // ====================== 引擎初始化 ======================
 async function 初始化引擎() {
     await 等待配置加载();
-
+    
     const 存储键名 = 读取配置('存储键名');
     const 初始状态配置 = 读取配置('初始状态');
     const 语言配置数据 = 读取配置('语言配置');
-
+    
     当前语言 = localStorage.getItem(存储键名.语言) || null;
     语言配置表 = 语言配置数据;
-
+    
     if (!当前语言 || !语言配置表.语言列表[当前语言]) {
         当前语言 = 语言配置表.默认语言;
     }
-
+    
     当前状态 = JSON.parse(JSON.stringify(初始状态配置));
-
+    
     初始化CG存储();
     从本地存储加载用户变量();
     await 加载所有章节();
     刷新界面文字();
-
+    
     const url参数 = new URLSearchParams(window.location.search);
     const 存档标识 = url参数.get('存档');
-
+    
     if (存档标识 === 'auto') {
         加载自动存档();
     } else if (存档标识) {
         加载指定存档(parseInt(存档标识));
     }
-
+    
     if (!存档标识 && 章节库.序章?.length) {
         切换章节('序章', 0);
     }
-
+    
     document.addEventListener("click", 处理全局点击);
 }
 // 自动初始化
