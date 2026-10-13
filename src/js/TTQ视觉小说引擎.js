@@ -6,7 +6,7 @@
  * Copyright (c) 2025-2026 Tian
  */
 // js/TTQ视觉小说引擎.js
-// 版本: v1.9.6
+// 版本: v1.9.7
 // 开发者: Tian
 // ⚠️ 对js不熟的不要动这个文件
 
@@ -137,7 +137,7 @@ function 解析指令行(行) {
             结果.立绘 = 结果.立绘 || {};
             const 位置映射 = { '左': '左立绘', '中': '中立绘', '右': '右立绘' };
             const 位置 = 位置映射[参数[0]] || 参数[0];
-            结果.立绘[位置] = 结果.立绘[位置];
+            结果.立绘[位置] = 结果.立绘[位置] || {};
             结果.立绘[位置].媒体 = {
                 循环: 参数.循环 !== 'false',
                 播放次数: parseInt(参数.播放次数),
@@ -212,15 +212,20 @@ function 解析指令行(行) {
         
         case '输入': {
             const 原始参数 = 匹配[2];
-            const 分割符位置 = 原始参数.search(/[ ,]/);
-            let 变量名 = 原始参数;
+            const 第一段 = 原始参数.split(',')[0].trim();
+            let 变量名 = '';
             let 参数文本 = '';
-            if (分割符位置 !== -1) {
-                变量名 = 原始参数.slice(0, 分割符位置).trim();
-                参数文本 = 原始参数.slice(分割符位置 + 1).trim();
+            if (!第一段.includes('=')) {
+                const 分割符位置 = 原始参数.search(/[ ,]/);
+                if (分割符位置 !== -1) {
+                    变量名 = 原始参数.slice(0, 分割符位置).trim();
+                    参数文本 = 原始参数.slice(分割符位置 + 1).trim();
+                } else {
+                    变量名 = 原始参数.trim();
+                    参数文本 = '';
+                }
             } else {
-                变量名 = 原始参数.trim();
-                参数文本 = '';
+                参数文本 = 原始参数;
             }
             const 参数 = 解析参数(参数文本);
             结果.输入 = {
@@ -562,6 +567,8 @@ let 全局音效 = [];
 let 隐藏模式激活 = false;
 let 语言配置表 = null;
 let 当前语言 = null;
+let 背景切换token = 0;
+let 正在切换语言 = false;
 
 // ====================== 跳转函数 ======================
 function 处理跳转(目标) {
@@ -569,13 +576,14 @@ function 处理跳转(目标) {
         当前状态.当前索引 = 目标;
         继续剧情();
     } else if (目标?.章节) {
-        let 目标索引 = 目标.索引 || 0;
-        if (typeof 目标索引 === 'string') {
-            const 目标章节数据 = 章节库[目标.章节];
-            if (目标章节数据) {
-                const 标签表 = 建立标签表(目标章节数据);
-                目标索引 = 标签表[目标索引] ?? 0;
-            }
+        let 目标索引 = 目标.索引 ?? 0;
+        const 目标章节数据 = 章节库[目标.章节];
+        if (目标.标签 && 目标章节数据) {
+            const 标签表 = 建立标签表(目标章节数据);
+            目标索引 = 标签表[目标.标签] ?? 0;
+        } else if (typeof 目标索引 === 'string' && 目标章节数据) {
+            const 标签表 = 建立标签表(目标章节数据);
+            目标索引 = 标签表[目标索引] ?? 0;
         }
         切换章节(目标.章节, 目标索引);
     } else if (typeof 目标 === 'string') {
@@ -591,6 +599,7 @@ function 处理跳转(目标) {
 function 切换语言(新语言代码) {
     if (!语言配置表 || !语言配置表.语言列表[新语言代码]) return;
     if (当前语言 === 新语言代码) return;
+    if (正在切换语言) return;
     
     当前语言 = 新语言代码;
     const 存储键名 = 读取配置('存储键名');
@@ -606,9 +615,13 @@ function 切换语言(新语言代码) {
     const 当前章节 = 当前状态.当前章节;
     const 当前索引 = 当前状态.当前索引;
     if (当前章节) {
+        正在切换语言 = true;
         delete 章节库[当前章节];
         加载章节(当前章节).then(() => {
             切换章节(当前章节, 当前索引);
+            正在切换语言 = false;
+        }).catch(() => {
+            正在切换语言 = false;
         });
     }
     
@@ -729,7 +742,9 @@ function 刷新当前对话() {
         当前节点.选项.forEach((opt, idx) => {
             if (按钮列表[idx]) {
                 let 选项文本 = '';
-                if (当前语言 !== 语言配置表.默认语言) {
+                if (opt._翻译文本) {
+                    选项文本 = opt._翻译文本;
+                } else if (当前语言 !== 语言配置表.默认语言) {
                     const 选项字段 = `文本_${当前语言}`;
                     选项文本 = opt[选项字段] || opt[`文本_${语言配置表.默认语言}`] || opt.文本 || '';
                 } else {
@@ -932,7 +947,7 @@ function 初始化CG存储() {
 }
 
 function 解锁CG(CG名称, CG路径 = "") {
-    const 键名 = 读取配置('CG存储键名', "Dvnge视觉小说引擎_CG收集库");
+    const 键名 = 读取配置('存储键名').CG;
     const CG库 = JSON.parse(localStorage.getItem(键名)) || {};
     CG库[CG名称] = { 路径: CG路径, 解锁时间: new Date().toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }) };
     localStorage.setItem(键名, JSON.stringify(CG库));
@@ -940,12 +955,12 @@ function 解锁CG(CG名称, CG路径 = "") {
 }
 
 function 获取已解锁CG() {
-    const 键名 = 读取配置('CG存储键名', "Dvnge视觉小说引擎_CG收集库");
+    const 键名 = 读取配置('存储键名').CG;
     return JSON.parse(localStorage.getItem(键名)) || {};
 }
 
 function 检查CG解锁状态(CG名称) {
-    const 键名 = 读取配置('CG存储键名', "Dvnge视觉小说引擎_CG收集库");
+    const 键名 = 读取配置('存储键名').CG;
     const CG库 = JSON.parse(localStorage.getItem(键名)) || {};
     return !!CG库[CG名称];
 }
@@ -1073,8 +1088,9 @@ function 显示提示(消息) {
 }
 
 function 自动存档(存档位 = 0) {
+    const 存储键名 = 读取配置('存储键名');
     const 存档数据 = 生成存档快照();
-    localStorage.setItem(`自动存档`, JSON.stringify(存档数据));
+    localStorage.setItem(存储键名.自动存档, JSON.stringify(存档数据));
     显示提示(获取界面文字('已保存') || '游戏已自动存档');
 }
 
@@ -1416,46 +1432,14 @@ function 停止快进() {
 
 function 开始快进() {
     if (!当前状态.快进模式) return;
-    
     const 当前章节数据 = 章节库[当前状态.当前章节];
     if (!当前章节数据) return;
     if (当前状态.当前索引 >= 当前章节数据.length) {
         停止快进();
         return;
     }
-    
     const 当前节点 = 当前章节数据[当前状态.当前索引];
-    const 有交互 = !!(当前节点?.选项?.length) || !!(当前节点?.输入) || !!(当前节点?.调查);
-    
     更新场景(当前节点);
-    
-    if (有交互) {
-        停止快进();
-        const 快进按钮 = document.getElementById('快进按钮');
-        if (快进按钮) 快进按钮.classList.remove('激活');
-        return;
-    }
-    const 下一个索引 = 当前状态.当前索引 + 1;
-    if (下一个索引 >= 当前章节数据.length) {
-        停止快进();
-        return;
-    }
-    
-    const 下一个节点 = 当前章节数据[下一个索引];
-    const 下一个有交互 = !!(下一个节点?.选项?.length) || !!(下一个节点?.输入) || !!(下一个节点?.调查);
-    
-    if (下一个有交互) {
-        当前状态.当前索引 = 下一个索引;
-        开始快进();
-        return;
-    }
-    
-    当前状态.快进定时器 = setTimeout(() => {
-        当前状态.快进定时器 = null;
-        if (!当前状态.快进模式) return;
-        当前状态.当前索引++;
-        开始快进();
-    }, 200);
 }
 
 function 切换快进模式(e) {
@@ -1544,12 +1528,6 @@ function 继续剧情() {
     if (当前状态.当前索引 >= 当前章节数据.length) return;
     
     const 当前节点 = 当前章节数据[当前状态.当前索引];
-    
-    if (当前状态.快进模式) {
-        开始快进();
-        return;
-    }
-    
     更新场景(当前节点);
 }
 
@@ -1686,7 +1664,9 @@ function 更新场景(当前节点) {
                 const 已有背景视频 = document.getElementById('背景视频');
                 if (已有背景视频) 已有背景视频.remove();
                 背景容器.style.opacity = '0';
+                const 本次背景token = ++背景切换token;
                 setTimeout(() => {
+                    if (本次背景token !== 背景切换token) return;
                     背景容器.style.background = 背景图;
                     void 背景容器.offsetHeight;
                     背景容器.style.opacity = '1';
@@ -1800,6 +1780,10 @@ function 更新场景(当前节点) {
     if (节点.动画?.左立绘) 应用动画(document.getElementById('左立绘'), 节点.动画.左立绘);
     if (节点.动画?.中立绘) 应用动画(document.getElementById('中立绘'), 节点.动画.中立绘);
     if (节点.动画?.右立绘) 应用动画(document.getElementById('右立绘'), 节点.动画.右立绘);
+    
+    if (节点.音乐淡出时间 !== undefined) {
+        当前状态.音乐淡出时间 = 节点.音乐淡出时间;
+    }
     
     const 音乐播放器 = document.getElementById('背景音乐');
     if (节点.hasOwnProperty('音乐')) {
@@ -1996,7 +1980,8 @@ function 更新场景(当前节点) {
             选项容器.innerHTML = '';
             
             if (有选项) {
-                const 已选记录 = JSON.parse(localStorage.getItem('已选选项记录') || '{}');
+                const 存储键名 = 读取配置('存储键名');
+                const 已选记录 = JSON.parse(localStorage.getItem(存储键名.已选选项) || '{}');
                 节点.选项.forEach((选项, 索引) => {
                     const 选项按钮 = document.createElement('div');
                     选项按钮.className = '选项按钮';
@@ -2025,10 +2010,10 @@ function 更新场景(当前节点) {
                         e.preventDefault();
                         if (!已选记录[选项标识]) {
                             已选记录[选项标识] = { 时间: new Date().toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }), 章节: 当前状态.当前章节, 索引: 当前状态.当前索引, 选项文本: 选项.文本 };
-                            localStorage.setItem('已选选项记录', JSON.stringify(已选记录));
+                            localStorage.setItem(存储键名.已选选项, JSON.stringify(已选记录));
                             this.classList.add('已选');
                         }
-                        选项容器.querySelectorAll('.选项按钮').forEach(btn => { btn.removeEventListener('click', this); });
+                        选项容器.querySelectorAll('.选项按钮').forEach(btn => { btn.style.pointerEvents = 'none'; });
                         处理选项点击(选项);
                     });
                     选项容器.appendChild(选项按钮);
@@ -2119,10 +2104,43 @@ function 更新场景(当前节点) {
     if (节点.自定义功能) {
         try { eval(节点.自定义功能); } catch (e) { console.error('自定义功能错误:', e); }
     }
+    
+    if (节点.快进模式 !== undefined) {
+        当前状态.快进模式 = 节点.快进模式;
+        const 快进按钮 = document.getElementById('快进按钮');
+        if (快进按钮) {
+            if (节点.快进模式) 快进按钮.classList.add('激活');
+            else 快进按钮.classList.remove('激活');
+        }
+    }
+    
+    if (当前状态.快进模式) {
+        if (节点.选项?.length || 节点.输入 || 节点.调查) {
+            停止快进();
+            const 快进按钮 = document.getElementById('快进按钮');
+            if (快进按钮) 快进按钮.classList.remove('激活');
+        } else {
+            const 章节数据 = 章节库[当前状态.当前章节];
+            const 下一个索引 = 当前状态.当前索引 + 1;
+            if (下一个索引 < 章节数据.length) {
+                当前状态.快进定时器 = setTimeout(() => {
+                    当前状态.快进定时器 = null;
+                    if (!当前状态.快进模式) return;
+                    当前状态.当前索引++;
+                    继续剧情();
+                }, 200);
+            } else {
+                停止快进();
+                const 快进按钮 = document.getElementById('快进按钮');
+                if (快进按钮) 快进按钮.classList.remove('激活');
+            }
+        }
+    }
 }
 
 // ====================== 全局事件 ======================
 function 处理全局点击(e) {
+    if (正在切换语言) return;
     if (e.target.closest && e.target.closest('#隐藏对话按钮')) {
         return;
     }
@@ -2190,7 +2208,12 @@ function 生成存档快照() {
         自动节点: 当前状态.自动节点,
         逐字显示: { 启用: 当前状态.逐字显示.启用, 速度: 当前状态.逐字显示.速度 },
         用户变量: JSON.parse(JSON.stringify(当前状态.用户变量)),
-        打字音效: { ...当前状态.打字音效 }
+        打字音效: {
+            启用: 当前状态.打字音效.启用,
+            路径: 当前状态.打字音效.路径,
+            音量: 当前状态.打字音效.音量,
+            间隔字符数: 当前状态.打字音效.间隔字符数
+        }
     };
 }
 
@@ -2380,15 +2403,17 @@ function 恢复存档状态(存档) {
 function 保存存档(存档位) {
     const 最大位 = 读取配置('最大存档位', 2);
     if (存档位 < 1 || 存档位 > 最大位) return;
+    const 存储键名 = 读取配置('存储键名');
     显示提示(`${获取界面文字('已保存') || '已保存'} ${存档位}`);
     const 存档数据 = 生成存档快照();
-    localStorage.setItem(`手动存档_${存档位}`, JSON.stringify(存档数据));
+    localStorage.setItem(`${存储键名.手动存档前缀}${存档位}`, JSON.stringify(存档数据));
     更新存档显示(存档位);
 }
 
 function 更新存档显示(存档位) {
+    const 存储键名 = 读取配置('存储键名');
     const 是自动存档 = 存档位 === 'auto';
-    const 存档键名 = 是自动存档 ? '自动存档' : `手动存档_${存档位}`;
+    const 存档键名 = 是自动存档 ? 存储键名.自动存档 : `${存储键名.手动存档前缀}${存档位}`;
     const 存档项 = document.querySelector(`.存档项[data-slot="${存档位}"]`);
     if (!存档项) return;
     const 数据 = localStorage.getItem(存档键名);
@@ -2425,7 +2450,8 @@ function 更新所有存档项显示文字() {
 }
 
 function 加载存档(存档位) {
-    const 存档键名 = 存档位 === 'auto' ? '自动存档' : `手动存档_${存档位}`;
+    const 存储键名 = 读取配置('存储键名');
+    const 存档键名 = 存档位 === 'auto' ? 存储键名.自动存档 : `${存储键名.手动存档前缀}${存档位}`;
     const 数据 = localStorage.getItem(存档键名);
     if (!数据) return;
     try {
@@ -2453,8 +2479,9 @@ function 加载存档(存档位) {
 function 加载自动存档() { 加载存档('auto'); }
 
 function 加载指定存档(存档标识) {
+    const 存储键名 = 读取配置('存储键名');
     const 是自动存档 = 存档标识 === 'auto';
-    const 存档键名 = 是自动存档 ? '自动存档' : `手动存档_${存档标识}`;
+    const 存档键名 = 是自动存档 ? 存储键名.自动存档 : `${存储键名.手动存档前缀}${存档标识}`;
     const 存档数据 = localStorage.getItem(存档键名);
     if (!存档数据) {
         alert(是自动存档 ? '未找到自动存档' : `存档位${存档标识}为空`);

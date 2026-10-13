@@ -1,4 +1,4 @@
-<!-- Dvnge_v1.9.6 -->
+<!-- Dvnge_v1.9.7 -->
 <!-- 游戏入口 -->
 <!DOCTYPE html>
 <html>
@@ -61,9 +61,9 @@
         </div>
         <div class="存档操作栏">
             <button id="导出存档按钮" onclick="导出存档()">导出存档</button>
-            <button id="导入存档按钮" onclick="document.getElementById('导入文件').click()">导入存档</button>
+            <button id="导入存档按钮" onclick="触发导入存档()">导入存档</button>
         </div>
-        <input type="file" id="导入文件" class="隐藏" accept=".json" onchange="导入存档(event)">
+        <input type="file" id="导入文件" accept=".json" onchange="导入存档(event)" style="position:absolute;left:-9999px;top:-9999px;opacity:0;width:1px;height:1px;">
         <button class="关闭按钮" onclick="关闭存档界面()">×</button>
     </div>
     

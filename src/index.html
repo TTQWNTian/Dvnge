@@ -151,8 +151,9 @@
         </div>
     </div>
     
+    <script src="js/游戏配置.js"></script>
     <script>
-        let 当前界面语言 = localStorage.getItem('Dvnge_语言') || 'zh';
+        let 当前界面语言 = localStorage.getItem(window.游戏配置.存储键名.语言) || 'zh';
         
         const 界面文字 = {
             'zh': {
@@ -203,7 +204,7 @@
         
         function 切换界面语言(语言代码) {
             当前界面语言 = 语言代码;
-            localStorage.setItem('Dvnge_语言', 语言代码);
+            localStorage.setItem(window.游戏配置.存储键名.语言, 语言代码);
             刷新界面文字();
         }
         
@@ -216,11 +217,13 @@
             const 标题 = document.getElementById('弹层标题');
             const 内容 = document.getElementById('弹层内容');
             const 文字 = 界面文字[当前界面语言] || 界面文字['zh'];
+            const 存储键名 = window.游戏配置.存储键名;
+            const 最大位 = window.游戏配置.最大存档位 || 2;
             
             标题.textContent = 文字['读取存档'];
             内容.innerHTML = '';
             
-            const auto = localStorage.getItem('自动存档');
+            const auto = localStorage.getItem(存储键名.自动存档);
             const autoBlock = document.createElement('div');
             autoBlock.className = '弹层项';
             if (auto) {
@@ -237,8 +240,8 @@
             }
             内容.appendChild(autoBlock);
             
-            for (let i = 1; i <= 2; i++) {
-                const key = `手动存档_${i}`;
+            for (let i = 1; i <= 最大位; i++) {
+                const key = `${存储键名.手动存档前缀}${i}`;
                 const data = localStorage.getItem(key);
                 const slotBlock = document.createElement('div');
                 slotBlock.className = '弹层项';
@@ -269,27 +272,19 @@
             标题.textContent = 文字['选择语言'];
             内容.innerHTML = '';
             
-            const script = document.createElement('script');
-            script.src = 'js/游戏配置.js';
-            script.onload = () => {
-                for (const [代码, 名称] of Object.entries(语言配置.语言列表)) {
-                    const 选项 = document.createElement('div');
-                    选项.className = '弹层项';
-                    if (代码 === 当前界面语言) {
-                        选项.classList.add('当前');
-                    }
-                    选项.innerHTML = `<strong>${名称}</strong>`;
-                    选项.onclick = () => {
-                        切换界面语言(代码);
-                        弹层.classList.remove('显示');
-                    };
-                    内容.appendChild(选项);
+            for (const [代码, 名称] of Object.entries(window.游戏配置.语言配置.语言列表)) {
+                const 选项 = document.createElement('div');
+                选项.className = '弹层项';
+                if (代码 === 当前界面语言) {
+                    选项.classList.add('当前');
                 }
-            };
-            script.onerror = () => {
-                内容.innerHTML = `<div class="弹层项">${文字['语言配置加载失败'] || '语言配置加载失败'}</div>`;
-            };
-            document.head.appendChild(script);
+                选项.innerHTML = `<strong>${名称}</strong>`;
+                选项.onclick = () => {
+                    切换界面语言(代码);
+                    弹层.classList.remove('显示');
+                };
+                内容.appendChild(选项);
+            }
             
             弹层.classList.add('显示');
         }
