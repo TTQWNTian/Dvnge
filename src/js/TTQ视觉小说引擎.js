@@ -6,7 +6,7 @@
  * Copyright (c) 2025-2026 Tian
  */
 // js/TTQ视觉小说引擎.js
-// 版本: v1.9.6
+// 版本: v1.10.0-dev
 // 开发者: Tian
 // ⚠️ 对js不熟的不要动这个文件
 
@@ -19,14 +19,14 @@ function 等待配置加载() {
             resolve(window.游戏配置);
             return;
         }
-        
+
         const 检查 = setInterval(() => {
             if (typeof window.游戏配置 !== 'undefined') {
                 clearInterval(检查);
                 resolve(window.游戏配置);
             }
         }, 30);
-        
+
         // 超时则报错
         setTimeout(() => {
             clearInterval(检查);
@@ -52,16 +52,20 @@ const 章节库 = {};
 
 // ====================== 剧本解析器 ======================
 function 解析参数(文本) {
-    const 参数 = { _原始: [] };
+    const 参数 = {
+        _原始: []
+    };
     if (!文本) return new Proxy(参数, {
-        get(t, p) { return p in t ? t[p] : (isNaN(p) ? undefined : t._原始[p]); }
+        get(t, p) {
+            return p in t ? t[p] : (isNaN(p) ? undefined : t._原始[p]);
+        }
     });
-    
+
     const 部分列表 = 文本.split(',').map(s => s.trim());
-    
+
     for (const 部分 of 部分列表) {
         if (!部分) continue;
-        
+
         if (部分.includes('=')) {
             const 等号位置 = 部分.indexOf('=');
             const 键 = 部分.slice(0, 等号位置).trim();
@@ -74,7 +78,7 @@ function 解析参数(文本) {
             参数._原始.push(部分);
         }
     }
-    
+
     return new Proxy(参数, {
         get(t, p) {
             if (p in t) return t[p];
@@ -87,16 +91,16 @@ function 解析参数(文本) {
 function 解析指令行(行) {
     const 匹配 = 行.match(/^@(\S+)\s*(.*)/);
     if (!匹配) return null;
-    
+
     const 指令名 = 匹配[1];
     const 参数 = 解析参数(匹配[2]);
     const 结果 = {};
-    
+
     switch (指令名) {
         case '背景':
             结果.背景 = 参数[0];
             break;
-            
+
         case '音乐':
             结果.音乐 = {
                 路径: 参数[0],
@@ -105,21 +109,27 @@ function 解析指令行(行) {
                 淡出: parseInt(参数.淡出)
             };
             break;
-            
+
         case '音效':
             结果.音效 = 参数[0];
             break;
-            
+
         case '立绘': {
             结果.立绘 = 结果.立绘 || {};
-            const 位置映射 = { '左': '左立绘', '中': '中立绘', '右': '右立绘' };
+            const 位置映射 = {
+                '左': '左立绘',
+                '中': '中立绘',
+                '右': '右立绘'
+            };
             const 位置 = 位置映射[参数[0]] || 参数[0];
             const 角色名 = 参数[1];
             const 预设名 = 参数[2];
             const 实际路径 = 解析立绘预设(角色名, 预设名) || 角色名;
-            
+
             if (角色名 === 'false') {
-                结果.立绘[位置] = { 隐藏: true };
+                结果.立绘[位置] = {
+                    隐藏: true
+                };
             } else {
                 结果.立绘[位置] = {
                     路径: 实际路径,
@@ -132,10 +142,14 @@ function 解析指令行(行) {
             }
             break;
         }
-        
+
         case '立绘媒体': {
             结果.立绘 = 结果.立绘 || {};
-            const 位置映射 = { '左': '左立绘', '中': '中立绘', '右': '右立绘' };
+            const 位置映射 = {
+                '左': '左立绘',
+                '中': '中立绘',
+                '右': '右立绘'
+            };
             const 位置 = 位置映射[参数[0]] || 参数[0];
             结果.立绘[位置] = 结果.立绘[位置] || {};
             结果.立绘[位置].媒体 = {
@@ -146,17 +160,19 @@ function 解析指令行(行) {
             };
             break;
         }
-        
+
         case '头像':
             结果.头像 = {
                 路径: 参数[0],
                 位置: 参数.位置
             };
             break;
-            
+
         case '标题':
             if (参数[0] === 'false') {
-                结果.标题 = { 显示: false };
+                结果.标题 = {
+                    显示: false
+                };
             } else {
                 let 样式 = 参数.样式 || '';
                 if (样式.includes(':')) {
@@ -167,7 +183,7 @@ function 解析指令行(行) {
                     });
                     样式 = 样式对象;
                 }
-                
+
                 结果.标题 = {
                     显示: true,
                     内容: 参数[0],
@@ -176,12 +192,14 @@ function 解析指令行(行) {
                 };
             }
             break;
-            
+
         case '目标': {
             const 目标 = 参数[0];
             const 章节 = 参数.章节 || 参数[1];
             if (章节) {
-                结果.目标 = { 章节 };
+                结果.目标 = {
+                    章节
+                };
                 if (!isNaN(目标) && 目标 !== '') 结果.目标.索引 = parseInt(目标);
                 else if (目标) 结果.目标.标签 = 目标;
             } else if (!isNaN(目标) && 目标 !== '') {
@@ -191,25 +209,25 @@ function 解析指令行(行) {
             }
             break;
         }
-        
+
         case '标签':
             结果.标签 = 参数[0];
             break;
-            
+
         case '设置变量': {
             const 设置 = {};
             解析设置变量(设置, 匹配[2]);
             if (Object.keys(设置).length > 0) 结果.设置变量 = 设置;
             break;
         }
-        
+
         case '读档时设置变量': {
             const 设置 = {};
             解析设置变量(设置, 匹配[2]);
             if (Object.keys(设置).length > 0) 结果.读档时设置变量 = 设置;
             break;
         }
-        
+
         case '输入': {
             const 原始参数 = 匹配[2];
             const 第一段 = 原始参数.split(',')[0].trim();
@@ -238,19 +256,22 @@ function 解析指令行(行) {
             };
             break;
         }
-        
+
         case '自动存档':
             结果.自动存档 = 参数[0] !== 'false';
             break;
-            
+
         case '自动节点':
             结果.自动节点 = parseFloat(参数[0]);
             break;
-            
+
         case '解锁CG':
-            结果.解锁CG = { 名称: 参数[0], 路径: 参数[1] };
+            结果.解锁CG = {
+                名称: 参数[0],
+                路径: 参数[1]
+            };
             break;
-            
+
         case '调查':
             结果.调查 = {
                 光标: 参数.光标,
@@ -258,13 +279,15 @@ function 解析指令行(行) {
                 区域: []
             };
             break;
-            
+
         case '跳转HTML':
-            结果.跳转HTML = { 路径: 参数[0] };
+            结果.跳转HTML = {
+                路径: 参数[0]
+            };
             if (参数.参数) 结果.跳转HTML.参数 = 参数.参数;
             if (参数.传递变量) 结果.跳转HTML.传递变量 = 参数.传递变量.split(',').map(s => s.trim());
             break;
-            
+
         case '条件':
             结果.条件 = {
                 表达式: 参数[0],
@@ -272,18 +295,25 @@ function 解析指令行(行) {
                 假目标: 参数.假
             };
             break;
-            
+
         case '逐字显示':
             if (参数[0] === 'false') {
-                结果.逐字显示 = { 启用: false };
+                结果.逐字显示 = {
+                    启用: false
+                };
             } else {
-                结果.逐字显示 = { 启用: true, 速度: parseFloat(参数[0]) };
+                结果.逐字显示 = {
+                    启用: true,
+                    速度: parseFloat(参数[0])
+                };
             }
             break;
-            
+
         case '打字音效':
             if (参数[0] === 'false') {
-                结果.打字音效 = { 启用: false };
+                结果.打字音效 = {
+                    启用: false
+                };
             } else {
                 结果.打字音效 = {
                     启用: true,
@@ -293,19 +323,15 @@ function 解析指令行(行) {
                 };
             }
             break;
-            
+
         case '快进':
             结果.快进模式 = 参数[0] === 'true';
             break;
-            
-        case '音乐淡出':
-            结果.音乐淡出时间 = parseInt(参数[0]);
-            break;
-            
+
         case '自定义功能':
             结果.自定义功能 = 参数[0];
             break;
-            
+
         case '动画': {
             结果.动画 = {};
             const 位置列表 = ['左立绘', '中立绘', '右立绘', '背景', '对话框', '角色', '内容', '头像'];
@@ -314,7 +340,7 @@ function 解析指令行(行) {
             }
             break;
         }
-        
+
         case '背景媒体':
             结果.背景媒体 = {
                 循环: 参数[0] !== 'false',
@@ -324,58 +350,58 @@ function 解析指令行(行) {
             };
             break;
     }
-    
+
     return Object.keys(结果).length > 0 ? 结果 : null;
 }
 
 function 解析剧本(剧本文本) {
     const 块列表 = 剧本文本.split('$').map(s => s.trim()).filter(s => s.length > 0);
     const 节点列表 = [];
-    
+
     for (const 块 of 块列表) {
         const 行列表 = 块.split('\n').map(s => s.trim()).filter(s => s && !s.startsWith('//'));
         if (!行列表.length) continue;
-        
+
         const 节点 = {};
         let 当前调查节点 = null;
         let 在选项中 = false;
         let 选项列表 = [];
-        
+
         for (let i = 0; i < 行列表.length; i++) {
             const 行 = 行列表[i];
-            
+
             const 对话匹配 = 行.match(/^"([^"]+)"\s*:\s*(.*)/);
             if (对话匹配) {
                 节点.角色 = 对话匹配[1].trim();
                 节点.内容 = 对话匹配[2].trim();
                 continue;
             }
-            
+
             if (行.startsWith('@')) {
                 if (在选项中) {
                     if (选项列表.length > 0) 节点.选项 = 选项列表;
                     在选项中 = false;
                 }
-                
+
                 if (行.startsWith('@选项')) {
                     在选项中 = true;
                     选项列表 = [];
                     continue;
                 }
-                
+
                 const 结果 = 解析指令行(行);
                 if (!结果) continue;
-                
+
                 if (结果.调查) {
                     当前调查节点 = 结果;
                     Object.assign(节点, 结果);
                     continue;
                 }
-                
+
                 Object.assign(节点, 结果);
                 continue;
             }
-            
+
             if (在选项中) {
                 const 跳转匹配 = 行.match(/^(.+?)\s*->\s*(.+)$/);
                 if (跳转匹配) {
@@ -386,12 +412,12 @@ function 解析剧本(剧本文本) {
                     let 否则目标 = null;
                     let 解锁CG = null;
                     let 样式 = {};
-                    
+
                     const 属性匹配 = 目标部分.match(/^(.*?)\s*,\s*(.+)$/);
                     if (属性匹配) {
                         目标部分 = 属性匹配[1].trim();
                         const 属性字符串 = 属性匹配[2].trim();
-                        
+
                         const 属性项列表 = [];
                         let 当前项 = '';
                         let 在引号内 = false;
@@ -405,13 +431,13 @@ function 解析剧本(剧本文本) {
                             }
                         }
                         if (当前项.trim()) 属性项列表.push(当前项.trim());
-                        
+
                         for (const 项 of 属性项列表) {
                             const 等号位置 = 项.indexOf('=');
                             if (等号位置 === -1) continue;
                             const 键 = 项.slice(0, 等号位置).trim();
                             const 值 = 项.slice(等号位置 + 1).trim();
-                            
+
                             switch (键) {
                                 case '设置变量':
                                     if (值) {
@@ -425,7 +451,10 @@ function 解析剧本(剧本文本) {
                                     否则目标 = 值;
                                     break;
                                 case '解锁CG':
-                                    解锁CG = { 名称: 值, 路径: '' };
+                                    解锁CG = {
+                                        名称: 值,
+                                        路径: ''
+                                    };
                                     break;
                                 case '样式':
                                     if (值.includes(':')) {
@@ -440,7 +469,7 @@ function 解析剧本(剧本文本) {
                             }
                         }
                     }
-                    
+
                     const 选项对象 = {
                         文本: 选项文本,
                         目标: 目标部分 || null
@@ -450,7 +479,7 @@ function 解析剧本(剧本文本) {
                     if (否则目标) 选项对象.否则目标 = 否则目标;
                     if (解锁CG) 选项对象.解锁CG = 解锁CG;
                     if (Object.keys(样式).length > 0) 选项对象.样式 = 样式;
-                    
+
                     选项列表.push(选项对象);
                 } else {
                     const 属性匹配 = 行.match(/^(.+?)\s*,\s*(.+)$/);
@@ -461,7 +490,7 @@ function 解析剧本(剧本文本) {
                         let 条件 = null;
                         let 解锁CG = null;
                         let 样式 = {};
-                        
+
                         const 属性项列表 = [];
                         let 当前项 = '';
                         let 在引号内 = false;
@@ -475,13 +504,13 @@ function 解析剧本(剧本文本) {
                             }
                         }
                         if (当前项.trim()) 属性项列表.push(当前项.trim());
-                        
+
                         for (const 项 of 属性项列表) {
                             const 等号位置 = 项.indexOf('=');
                             if (等号位置 === -1) continue;
                             const 键 = 项.slice(0, 等号位置).trim();
                             const 值 = 项.slice(等号位置 + 1).trim();
-                            
+
                             switch (键) {
                                 case '设置变量':
                                     if (值) {
@@ -492,7 +521,10 @@ function 解析剧本(剧本文本) {
                                     条件 = 值;
                                     break;
                                 case '解锁CG':
-                                    解锁CG = { 名称: 值, 路径: '' };
+                                    解锁CG = {
+                                        名称: 值,
+                                        路径: ''
+                                    };
                                     break;
                                 case '样式':
                                     if (值.includes(':')) {
@@ -506,7 +538,7 @@ function 解析剧本(剧本文本) {
                                     break;
                             }
                         }
-                        
+
                         const 选项对象 = {
                             文本: 选项文本,
                             目标: null
@@ -515,7 +547,7 @@ function 解析剧本(剧本文本) {
                         if (条件) 选项对象.条件 = 条件;
                         if (解锁CG) 选项对象.解锁CG = 解锁CG;
                         if (Object.keys(样式).length > 0) 选项对象.样式 = 样式;
-                        
+
                         选项列表.push(选项对象);
                     } else {
                         选项列表.push({
@@ -526,7 +558,7 @@ function 解析剧本(剧本文本) {
                 }
                 continue;
             }
-            
+
             if (当前调查节点 && 行.startsWith('区域 ')) {
                 const 区域参数 = 解析参数(行.replace('区域 ', ''));
                 当前调查节点.调查.区域.push({
@@ -539,17 +571,17 @@ function 解析剧本(剧本文本) {
                 });
                 continue;
             }
-            
+
             节点.内容 = 行;
         }
-        
+
         if (在选项中 && 选项列表.length > 0) {
             节点.选项 = 选项列表;
         }
-        
+
         节点列表.push(节点);
     }
-    
+
     return 节点列表;
 }
 
@@ -569,6 +601,9 @@ let 语言配置表 = null;
 let 当前语言 = null;
 let 背景切换token = 0;
 let 正在切换语言 = false;
+let 历史记录 = {
+    记录列表: []
+};
 
 // ====================== 跳转函数 ======================
 function 处理跳转(目标) {
@@ -600,18 +635,18 @@ function 切换语言(新语言代码) {
     if (!语言配置表 || !语言配置表.语言列表[新语言代码]) return;
     if (当前语言 === 新语言代码) return;
     if (正在切换语言) return;
-    
+
     当前语言 = 新语言代码;
     const 存储键名 = 读取配置('存储键名');
     localStorage.setItem(存储键名.语言, 当前语言);
-    
+
     if (当前状态.逐字显示 && 当前状态.逐字显示.打字定时器) {
         clearTimeout(当前状态.逐字显示.打字定时器);
         当前状态.逐字显示.打字定时器 = null;
     }
     const 内容元素 = document.querySelector('.内容');
     if (内容元素) 内容元素.dataset.正在打字 = 'false';
-    
+
     const 当前章节 = 当前状态.当前章节;
     const 当前索引 = 当前状态.当前索引;
     if (当前章节) {
@@ -624,49 +659,79 @@ function 切换语言(新语言代码) {
             正在切换语言 = false;
         });
     }
-    
+
     刷新界面文字();
 }
 
 function 刷新界面文字() {
     if (!语言配置表) return;
-    
+
     const 映射 = {
         '快进按钮': '快进',
         '隐藏对话按钮': '隐藏',
+        '历史按钮': '历史',
         '导出存档按钮': '导出存档',
         '导入存档按钮': '导入存档'
     };
-    
+
     for (const [id, key] of Object.entries(映射)) {
         const el = document.getElementById(id);
         if (el) el.textContent = 获取界面文字(key);
     }
-    
+
     const 存档标题 = document.querySelector('#存档界面 .标题');
     if (存档标题) 存档标题.textContent = 获取界面文字('存档管理');
+
+    const 历史标题 = document.querySelector('#历史界面 .标题');
+    if (历史标题) 历史标题.textContent = 获取界面文字('历史记录');
+
+    const 历史配置 = 读取配置('历史记录配置', {});
+
+    const 历史底部提示 = document.getElementById('历史底部提示');
+    if (历史底部提示) {
+        if (历史配置.允许回退 !== false) {
+            历史底部提示.textContent = 获取界面文字('点击任意记录可回退') || '点击任意记录可回退到该位置';
+        } else {
+            历史底部提示.textContent = 获取界面文字('历史仅查看') || '历史记录仅供查看';
+        }
+    }
+
+    const 历史按钮 = document.getElementById('历史按钮');
+    if (历史按钮) {
+        if (历史配置.启用) {
+            历史按钮.classList.remove('隐藏');
+        } else {
+            历史按钮.classList.add('隐藏');
+        }
+    }
 }
 
 function 获取界面文字(标识) {
     if (!语言配置表 || !当前语言) return 标识;
     if (当前语言 === 语言配置表.默认语言) return 标识;
-    
+
     const 文字项 = 语言配置表.界面文字?.[标识];
     if (!文字项) return 标识;
     return 文字项[当前语言] || 标识;
 }
 
 function 获取本地化文本(节点) {
-    if (!节点) return { 角色: '', 内容: '' };
-    if (!语言配置表) return { 角色: 节点.角色 || '', 内容: 节点.内容 || '' };
-    
+    if (!节点) return {
+        角色: '',
+        内容: ''
+    };
+    if (!语言配置表) return {
+        角色: 节点.角色 || '',
+        内容: 节点.内容 || ''
+    };
+
     if (节点._翻译内容 !== undefined) {
         return {
             角色: 节点._翻译角色 || 节点.角色 || '',
             内容: 节点._翻译内容 || ''
         };
     }
-    
+
     if (当前语言 !== 语言配置表.默认语言) {
         const 角色字段 = `角色_${当前语言}`;
         const 内容字段 = `内容_${当前语言}`;
@@ -677,7 +742,7 @@ function 获取本地化文本(节点) {
             };
         }
     }
-    
+
     return {
         角色: 节点.角色 || '',
         内容: 节点.内容 || ''
@@ -690,16 +755,19 @@ function 刷新当前对话() {
     if (!当前章节数据) return;
     const 当前节点 = 当前章节数据[当前状态.当前索引];
     if (!当前节点) return;
-    
+
     const 容器 = document.getElementById('对话框容器');
     if (!容器) return;
-    
+
     const 角色元素 = 容器.querySelector('.角色');
     const 内容元素 = 容器.querySelector('.内容');
     const 选项容器 = 容器.querySelector('.选项容器');
-    
-    const { 角色, 内容 } = 获取本地化文本(当前节点);
-    
+
+    const {
+        角色,
+        内容
+    } = 获取本地化文本(当前节点);
+
     if (角色元素) {
         let 处理后的角色 = 角色.replace(/{([^}]+)}/g, (match, 变量路径) => {
             let val = 当前状态.用户变量;
@@ -714,7 +782,7 @@ function 刷新当前对话() {
         角色元素.style.display = 处理后的角色 ? 'block' : 'none';
         if (typeof 应用角色样式 === 'function') 应用角色样式();
     }
-    
+
     if (内容元素) {
         let 处理后的内容 = 内容.replace(/{([^}]+)}/g, (match, 变量路径) => {
             let val = 当前状态.用户变量;
@@ -735,7 +803,7 @@ function 刷新当前对话() {
             当前状态.逐字显示.打字已完成 = true;
         }
     }
-    
+
     if (当前节点.选项 && 当前节点.选项.length > 0) {
         if (!选项容器) return;
         const 按钮列表 = 选项容器.querySelectorAll('.选项按钮');
@@ -763,7 +831,7 @@ function 刷新当前对话() {
             }
         });
     }
-    
+
     if (当前节点.输入) {
         const 输入容器 = 容器.querySelector('.输入容器');
         if (输入容器) {
@@ -802,7 +870,7 @@ function 刷新当前对话() {
             }
         }
     }
-    
+
     if (当前节点.标题) {
         const 标题容器 = document.getElementById('标题容器');
         if (标题容器 && 当前节点.标题.内容) {
@@ -819,7 +887,7 @@ function 刷新当前对话() {
 function 切换对话框隐藏() {
     const 对话包装容器 = document.getElementById('对话包装容器');
     if (!对话包装容器) return;
-    
+
     if (隐藏模式激活) {
         对话包装容器.style.display = '';
         隐藏模式激活 = false;
@@ -829,6 +897,150 @@ function 切换对话框隐藏() {
     }
 }
 
+// ====================== 历史记录系统 ======================
+function 添加历史记录(节点, 执行前快照) {
+    const 配置 = 读取配置('历史记录配置', {});
+    if (!配置.启用) return;
+    if (当前状态.快进模式) return;
+    if (!节点.角色 && !节点.内容) return;
+
+    if (历史记录.记录列表.length > 0) {
+        const 最后 = 历史记录.记录列表[历史记录.记录列表.length - 1];
+        if (最后.章节 === 当前状态.当前章节 && 最后.索引 === 当前状态.当前索引) {
+            return;
+        }
+    }
+
+    const {
+        角色,
+        内容
+    } = 获取本地化文本(节点);
+    const 记录 = {
+        时间: new Date().toLocaleString('zh-CN', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+        }),
+        章节: 当前状态.当前章节,
+        索引: 当前状态.当前索引,
+        角色: 替换变量(角色, ''),
+        内容: 替换变量(内容, ''),
+        快照: 执行前快照
+    };
+
+    历史记录.记录列表.push(记录);
+
+    const 最大条数 = 配置.最大条数 || 100;
+    if (历史记录.记录列表.length > 最大条数) {
+        历史记录.记录列表.shift();
+    }
+}
+
+function 清空历史记录() {
+    历史记录.记录列表 = [];
+}
+
+function 打开历史界面(e) {
+    e?.stopPropagation();
+    停止快进();
+    渲染历史列表();
+    const 历史界面 = document.getElementById('历史界面');
+    if (历史界面) 历史界面.classList.remove('隐藏');
+}
+
+function 关闭历史界面() {
+    const 历史界面 = document.getElementById('历史界面');
+    if (历史界面) 历史界面.classList.add('隐藏');
+}
+
+function 渲染历史列表() {
+    const 列表 = document.getElementById('历史列表');
+    if (!列表) return;
+    列表.innerHTML = '';
+
+    const 配置 = 读取配置('历史记录配置', {});
+    const 允许回退 = 配置.允许回退 !== false;
+
+    if (历史记录.记录列表.length === 0) {
+        const 空提示 = document.createElement('div');
+        空提示.className = '历史空提示';
+        空提示.textContent = 获取界面文字('暂无历史记录') || '暂无历史记录';
+        列表.appendChild(空提示);
+        return;
+    }
+
+    历史记录.记录列表.forEach((记录, 索引) => {
+        const 项 = document.createElement('div');
+        项.className = '历史项';
+        if (允许回退) 项.classList.add('可回退');
+
+        const 头部 = document.createElement('div');
+        头部.className = '历史项头部';
+
+        if (记录.角色) {
+            const 角色 = document.createElement('span');
+            角色.className = '历史角色';
+            角色.textContent = 记录.角色;
+            头部.appendChild(角色);
+        } else {
+            const 占位 = document.createElement('span');
+            头部.appendChild(占位);
+        }
+
+        const 时间 = document.createElement('span');
+        时间.className = '历史时间';
+        时间.textContent = `${记录.章节} · ${记录.时间}`;
+        头部.appendChild(时间);
+
+        项.appendChild(头部);
+
+        if (记录.内容) {
+            const 内容 = document.createElement('div');
+            内容.className = '历史内容';
+            内容.textContent = 记录.内容;
+            项.appendChild(内容);
+        }
+
+        if (允许回退) {
+            项.addEventListener('click', () => {
+                回退到历史(索引);
+            });
+        }
+
+        列表.appendChild(项);
+    });
+
+    列表.scrollTop = 列表.scrollHeight;
+}
+
+function 回退到历史(索引) {
+    const 配置 = 读取配置('历史记录配置', {});
+    if (!配置.允许回退) return;
+
+    const 记录 = 历史记录.记录列表[索引];
+    if (!记录 || !记录.快照) return;
+
+    停止打字效果();
+    停止快进();
+
+    if (配置.回退后清除后续 !== false) {
+        历史记录.记录列表 = 历史记录.记录列表.slice(0, 索引);
+    }
+
+    恢复存档状态(JSON.parse(JSON.stringify(记录.快照)), true);
+
+    const 当前章节数据 = 章节库[当前状态.当前章节];
+    if (当前章节数据 && 当前状态.当前索引 < 当前章节数据.length) {
+        更新场景(当前章节数据[当前状态.当前索引]);
+    }
+
+    关闭历史界面();
+    显示提示(获取界面文字('已回退') || '已回退');
+}
+
 // ====================== 章节加载 ======================
 function 加载章节(章节名) {
     return new Promise(async (resolve, reject) => {
@@ -836,16 +1048,16 @@ function 加载章节(章节名) {
             resolve(章节库[章节名]);
             return;
         }
-        
+
         const 章节列表 = 读取配置('章节文件列表');
         const 章节配置 = 章节列表.find(c => c.名称 === 章节名);
         if (!章节配置) {
             reject(new Error(`章节【${章节名}】未在章节文件列表中定义`));
             return;
         }
-        
+
         const 路径 = 章节配置.路径;
-        
+
         let 主节点列表 = [];
         if (路径.endsWith('.dvns')) {
             主节点列表 = await 章节库.加载剧本(路径, 章节名);
@@ -863,7 +1075,7 @@ function 加载章节(章节名) {
                 reject(new Error(`章节【${章节名}】数据加载失败`));
             }
         }
-        
+
         if (当前语言 && 语言配置表 && 当前语言 !== 语言配置表.默认语言) {
             const 翻译路径 = `chapter/tl/${当前语言}/${章节名}.dvns`;
             try {
@@ -914,7 +1126,7 @@ function 加载章节(章节名) {
                 }
             } catch (e) {}
         }
-        
+
         章节库[章节名] = 主节点列表;
         resolve(主节点列表);
     });
@@ -949,7 +1161,17 @@ function 初始化CG存储() {
 function 解锁CG(CG名称, CG路径 = "") {
     const 键名 = 读取配置('存储键名').CG;
     const CG库 = JSON.parse(localStorage.getItem(键名)) || {};
-    CG库[CG名称] = { 路径: CG路径, 解锁时间: new Date().toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }) };
+    CG库[CG名称] = {
+        路径: CG路径,
+        解锁时间: new Date().toLocaleString('zh-CN', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+        })
+    };
     localStorage.setItem(键名, JSON.stringify(CG库));
     return true;
 }
@@ -987,11 +1209,11 @@ function 替换变量(文本, 默认值 = '') {
 function 解析变量设置值(值) {
     if (typeof 值 === 'string') {
         let 原始值 = 值;
-        
+
         if (原始值.startsWith('=')) {
             原始值 = 原始值.slice(1).trim();
         }
-        
+
         const 操作符匹配 = 原始值.match(/^(\+|\-|\*|\/)=(-?\d+\.?\d*)/);
         if (操作符匹配) {
             return {
@@ -999,12 +1221,12 @@ function 解析变量设置值(值) {
                 数值: parseFloat(操作符匹配[2])
             };
         }
-        
+
         const 数字值 = parseFloat(原始值);
         if (!isNaN(数字值) && 原始值.trim() !== '') {
             return 数字值;
         }
-        
+
         return 原始值;
     }
     return 值;
@@ -1018,7 +1240,7 @@ function 应用变量设置(变量路径, 值) {
         当前对象 = 当前对象[段];
     });
     const 最后字段 = 路径数组[路径数组.length - 1];
-    
+
     if (typeof 值 === 'object' && 值.操作符) {
         const 当前值 = parseFloat(当前对象[最后字段] || 0);
         const 数值 = 值.数值;
@@ -1159,27 +1381,27 @@ function 切换章节(新章节名称, 起始索引 = 0, 选项 = {}) {
             起始索引 = 0;
         }
     }
-    
+
     const 播放器 = document.getElementById('背景音乐');
     if (当前状态.音乐) {
         播放器.pause();
         播放器.src = '';
     }
-    
+
     const 已有调查层 = document.getElementById('调查层');
     if (已有调查层) 已有调查层.remove();
     document.body.style.cursor = 'default';
-    
+
     const 存档按钮 = document.getElementById('存档按钮');
     const 返回按钮 = document.getElementById('返回按钮');
     if (存档按钮) 存档按钮.classList.remove('隐藏');
     if (返回按钮) 返回按钮.classList.add('隐藏');
-    
+
     const 已有头像容器 = document.getElementById('对话框头像容器');
     if (已有头像容器) {
         已有头像容器.remove();
     }
-    
+
     const 初始 = 读取配置('初始状态');
     当前状态 = {
         ...JSON.parse(JSON.stringify(初始)),
@@ -1187,7 +1409,7 @@ function 切换章节(新章节名称, 起始索引 = 0, 选项 = {}) {
         当前索引: 起始索引,
         用户变量: 从本地存储加载用户变量() ? 当前状态.用户变量 : {}
     };
-    
+
     ['左立绘', '中立绘', '右立绘'].forEach(位置 => {
         const 元素 = document.getElementById(位置);
         if (元素) {
@@ -1195,7 +1417,7 @@ function 切换章节(新章节名称, 起始索引 = 0, 选项 = {}) {
             元素.src = "";
         }
     });
-    
+
     const 新章节数据 = 章节库[新章节名称];
     if (!新章节数据?.length) {
         console.error(`章节【${新章节名称}】数据加载失败`);
@@ -1219,7 +1441,9 @@ function 控制视频播放(视频元素, 配置) {
             当前计数++;
             if (当前计数 < 播放次数) {
                 if (播放间隔 > 0) {
-                    setTimeout(() => { 视频元素.play(); }, 播放间隔);
+                    setTimeout(() => {
+                        视频元素.play();
+                    }, 播放间隔);
                 } else {
                     视频元素.play();
                 }
@@ -1240,7 +1464,7 @@ function 开始逐字显示(内容元素, 完整文本, 速度, 当前节点) {
     }
     内容元素.dataset.正在打字 = 'true';
     内容元素.dataset.完整内容 = 完整文本;
-    
+
     let 打字音效对象 = null;
     if (当前状态.打字音效 && 当前状态.打字音效.启用 && 当前状态.打字音效.路径) {
         try {
@@ -1259,15 +1483,15 @@ function 开始逐字显示(内容元素, 完整文本, 速度, 当前节点) {
             当前状态.打字音效.当前音效对象 = null;
         }
     }
-    
+
     const 临时容器 = document.createElement('div');
     临时容器.style.position = 'absolute';
     临时容器.style.visibility = 'hidden';
     临时容器.innerHTML = 完整文本;
     document.body.appendChild(临时容器);
-    
+
     const 文本节点列表 = [];
-    
+
     function 收集文本节点(节点) {
         if (节点.nodeType === Node.TEXT_NODE) {
             const 文本 = 节点.textContent;
@@ -1284,30 +1508,46 @@ function 开始逐字显示(内容元素, 完整文本, 速度, 当前节点) {
     }
     收集文本节点(临时容器);
     document.body.removeChild(临时容器);
-    
+
     const 显示结构 = [];
-    
+
     function 构建显示结构(节点, 父标签 = '') {
         if (节点.nodeType === Node.TEXT_NODE) {
             const 文本 = 节点.textContent;
             for (const 字符 of 文本) {
-                显示结构.push({ 类型: '字符', 内容: 字符, 父标签: 父标签 });
+                显示结构.push({
+                    类型: '字符',
+                    内容: 字符,
+                    父标签: 父标签
+                });
             }
         } else if (节点.nodeType === Node.ELEMENT_NODE) {
             const 标签名 = 节点.tagName.toLowerCase();
             const 自闭合标签 = ['br', 'hr', 'img', 'input', 'meta', 'link'];
             if (自闭合标签.includes(标签名)) {
-                显示结构.push({ 类型: '标签', 内容: 节点.outerHTML, 父标签: 父标签 });
+                显示结构.push({
+                    类型: '标签',
+                    内容: 节点.outerHTML,
+                    父标签: 父标签
+                });
             } else {
-                显示结构.push({ 类型: '开始标签', 内容: `<${标签名}${获取属性字符串(节点)}>`, 父标签: 父标签 });
+                显示结构.push({
+                    类型: '开始标签',
+                    内容: `<${标签名}${获取属性字符串(节点)}>`,
+                    父标签: 父标签
+                });
                 for (const 子节点 of 节点.childNodes) {
                     构建显示结构(子节点, 标签名);
                 }
-                显示结构.push({ 类型: '结束标签', 内容: `</${标签名}>`, 父标签: 父标签 });
+                显示结构.push({
+                    类型: '结束标签',
+                    内容: `</${标签名}>`,
+                    父标签: 父标签
+                });
             }
         }
     }
-    
+
     function 获取属性字符串(元素) {
         let 属性字符串 = '';
         for (const 属性 of 元素.attributes) {
@@ -1320,14 +1560,14 @@ function 开始逐字显示(内容元素, 完整文本, 速度, 当前节点) {
     for (const 子节点 of 临时解析器.childNodes) {
         构建显示结构(子节点);
     }
-    
+
     let 当前索引 = 0;
     let 当前HTML = '';
     const 标签堆栈 = [];
     let 字符计数 = 1;
     const 音效启用 = !!(当前状态.打字音效 && 当前状态.打字音效.启用 && 打字音效对象);
     const 音效间隔 = 当前状态.打字音效.间隔字符数;
-    
+
     const 打字函数 = () => {
         if (当前索引 >= 显示结构.length) {
             内容元素.innerHTML = 完整文本;
@@ -1463,7 +1703,9 @@ function 停止当前音效() {
             音效.currentTime = 0;
             const 索引 = 全局音效.indexOf(音效);
             if (索引 !== -1) 全局音效.splice(索引, 1);
-        } catch (错误) { console.error('停止音效时出错:', 错误); }
+        } catch (错误) {
+            console.error('停止音效时出错:', 错误);
+        }
     });
     当前状态.音效 = [];
 }
@@ -1471,7 +1713,7 @@ function 停止当前音效() {
 // ====================== 条件解析 ======================
 function 解析条件表达式(表达式) {
     if (!表达式) return true;
-    
+
     try {
         return new Function("vars", "getVar", "Math", `
       try {
@@ -1497,7 +1739,7 @@ function 处理选项点击(选项) {
     if (选项.条件) {
         条件满足 = 解析条件表达式(选项.条件);
     }
-    
+
     if (条件满足 && 选项.设置变量) {
         Object.entries(选项.设置变量).forEach(([变量路径, 值]) => {
             应用变量设置(变量路径, 值);
@@ -1522,11 +1764,11 @@ function 继续剧情() {
         clearTimeout(当前状态.快进定时器);
         当前状态.快进定时器 = null;
     }
-    
+
     const 当前章节数据 = 章节库[当前状态.当前章节];
     if (!当前章节数据) return;
     if (当前状态.当前索引 >= 当前章节数据.length) return;
-    
+
     const 当前节点 = 当前章节数据[当前状态.当前索引];
     更新场景(当前节点);
 }
@@ -1535,6 +1777,9 @@ function 继续剧情() {
 function 更新场景(当前节点) {
     节点 = 当前节点;
     if (!节点) return;
+
+    const 执行前快照 = 生成存档快照();
+
     停止当前音效();
     停止打字效果();
     清除所有动画();
@@ -1542,7 +1787,7 @@ function 更新场景(当前节点) {
         clearTimeout(当前状态.自动节点定时器);
         当前状态.自动节点定时器 = null;
     }
-    
+
     if (节点.跳转HTML) {
         const 跳转路径 = 节点.跳转HTML.路径 || 'index.html';
         let 参数部分 = 节点.跳转HTML.参数 ? `?${节点.跳转HTML.参数}` : '';
@@ -1563,12 +1808,12 @@ function 更新场景(当前节点) {
         window.location.href = 跳转路径 + 参数部分;
         return;
     }
-    
+
     if (节点.目标) {
         处理跳转(节点.目标);
         return;
     }
-    
+
     if (节点.自动节点 && 节点.自动节点 > 0) {
         当前状态.自动节点 = 节点.自动节点;
         当前状态.自动节点定时器 = setTimeout(() => {
@@ -1579,25 +1824,36 @@ function 更新场景(当前节点) {
     } else {
         当前状态.自动节点 = 0;
     }
-    
-    
+
+
     if (节点.设置变量) {
         Object.entries(节点.设置变量).forEach(([变量路径, 值]) => {
             应用变量设置(变量路径, 值);
         });
     }
-    
+
     if (节点.打字音效 !== undefined) {
         const 打字音效设置 = 节点.打字音效;
         if (打字音效设置 === null) {
-            当前状态.打字音效 = { 启用: false, 路径: "", 音量: 0.5, 间隔字符数: 1, 当前音效对象: null };
+            当前状态.打字音效 = {
+                启用: false,
+                路径: "",
+                音量: 0.5,
+                间隔字符数: 1,
+                当前音效对象: null
+            };
         } else {
             let 音效路径 = 打字音效设置.路径 || 当前状态.打字音效.路径;
             if (音效路径) {
                 音效路径 = 音效路径.replace(/{([^}]+)}/g, (匹配, 变量名) => {
                     const 变量路径 = 变量名.trim().split('.');
                     let 值 = 当前状态.用户变量;
-                    try { 变量路径.forEach(段 => 值 = 值[段]); return 值 || ''; } catch { return ''; }
+                    try {
+                        变量路径.forEach(段 => 值 = 值[段]);
+                        return 值 || '';
+                    } catch {
+                        return '';
+                    }
                 });
             }
             当前状态.打字音效 = {
@@ -1609,7 +1865,7 @@ function 更新场景(当前节点) {
             };
         }
     }
-    
+
     if (节点.背景 !== undefined) {
         if (节点.背景 === null) {
             const 背景视频元素 = document.getElementById('背景视频');
@@ -1625,7 +1881,10 @@ function 更新场景(当前节点) {
             let 背景值 = 节点.背景;
             背景值 = 替换变量(背景值, '');
             if (节点.背景媒体) {
-                当前状态.背景媒体 = { ...当前状态.背景媒体, ...节点.背景媒体 };
+                当前状态.背景媒体 = {
+                    ...当前状态.背景媒体,
+                    ...节点.背景媒体
+                };
             }
             const 视频扩展名 = ['mp4', 'webm', 'ogg', 'mov'];
             const 文件扩展名 = 背景值.split('.').pop().toLowerCase();
@@ -1639,10 +1898,10 @@ function 更新场景(当前节点) {
                 视频元素.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:-1';
                 const 目标音量 = 当前状态.背景媒体.音量 ?? 1;
                 视频元素.dataset.目标音量 = 目标音量;
-                
+
                 视频元素.volume = 目标音量;
                 视频元素.muted = (目标音量 === 0);
-                
+
                 视频元素.playsInline = true;
                 视频元素.autoplay = true;
                 document.body.appendChild(视频元素);
@@ -1676,7 +1935,7 @@ function 更新场景(当前节点) {
             }
         }
     }
-    
+
     if (节点.标题) {
         const 标题容器 = document.getElementById('标题容器');
         const 标题设置 = 节点.标题;
@@ -1690,22 +1949,19 @@ function 更新场景(当前节点) {
         } else {
             let 标题内容 = 标题设置._翻译内容 || 标题设置.内容 || '';
             标题内容 = 替换变量(标题内容, '');
-            const 位置类列表 = ['标题位置-上', '标题位置-下', '标题位置-左', '标题位置-右',
-                '标题位置-左上', '标题位置-左下', '标题位置-右上', '标题位置-右下', '标题位置-中'
-            ];
-            位置类列表.forEach(类名 => 标题容器.classList.remove(类名));
             const 位置 = 标题设置.位置 || '中';
-            标题容器.classList.add(`标题位置-${位置}`);
-            标题容器.textContent = 标题内容;
-            if (标题设置.样式) {
-                if (typeof 标题设置.样式 === 'string') {
-                    标题容器.className += ' ' + 标题设置.样式;
-                } else {
-                    Object.assign(标题容器.style, 标题设置.样式);
-                }
-            } else {
-                标题容器.style.cssText = '';
+            let 类名列表 = ['标题容器', `标题位置-${位置}`];
+            if (标题设置.样式 && typeof 标题设置.样式 === 'string') {
+                类名列表.push(标题设置.样式);
             }
+            标题容器.className = 类名列表.join(' ');
+
+            标题容器.style.cssText = '';
+            if (标题设置.样式 && typeof 标题设置.样式 === 'object') {
+                Object.assign(标题容器.style, 标题设置.样式);
+            }
+
+            标题容器.textContent = 标题内容;
             标题容器.classList.remove('隐藏');
             标题容器.classList.add('标题进入');
             当前状态.标题 = {
@@ -1717,7 +1973,7 @@ function 更新场景(当前节点) {
             };
         }
     }
-    
+
     ['左立绘', '中立绘', '右立绘'].forEach(位置 => {
         let 元素 = document.getElementById(位置);
         if (!元素) return;
@@ -1773,18 +2029,18 @@ function 更新场景(当前节点) {
             当前状态[位置].路径 = 节点立绘.路径;
         } else if (节点立绘.隐藏) {
             元素.style.opacity = 0;
-            当前状态[位置] = { ...当前状态[位置], 显示: false, 路径: "" };
+            当前状态[位置] = {
+                ...当前状态[位置],
+                显示: false,
+                路径: ""
+            };
         }
     });
-    
+
     if (节点.动画?.左立绘) 应用动画(document.getElementById('左立绘'), 节点.动画.左立绘);
     if (节点.动画?.中立绘) 应用动画(document.getElementById('中立绘'), 节点.动画.中立绘);
     if (节点.动画?.右立绘) 应用动画(document.getElementById('右立绘'), 节点.动画.右立绘);
-    
-    if (节点.音乐淡出时间 !== undefined) {
-        当前状态.音乐淡出时间 = 节点.音乐淡出时间;
-    }
-    
+
     const 音乐播放器 = document.getElementById('背景音乐');
     if (节点.hasOwnProperty('音乐')) {
         let 音乐路径 = typeof 节点.音乐 === "string" ? 节点.音乐 : (节点.音乐?.路径 || "");
@@ -1792,7 +2048,14 @@ function 更新场景(当前节点) {
             音乐路径 = 音乐路径.replace(/{([^}]+)}/g, (匹配, 变量名) => {
                 const 变量路径 = 变量名.trim().split('.');
                 let 值 = 当前状态.用户变量;
-                try { 变量路径.forEach(段 => { 值 = 值?.[段]; }); return 值 || ''; } catch { return '[无效路径]'; }
+                try {
+                    变量路径.forEach(段 => {
+                        值 = 值?.[段];
+                    });
+                    return 值 || '';
+                } catch {
+                    return '[无效路径]';
+                }
             });
         }
         if (音乐路径) {
@@ -1819,16 +2082,22 @@ function 更新场景(当前节点) {
             当前状态.音乐 = null;
         }
     }
-    
+
     if (节点.音效) {
         let 音效路径 = 节点.音效;
         音效路径 = 替换变量(音效路径, '');
         if (音效路径) {
             const 音效元素 = new Audio(音效路径);
             音效元素.addEventListener('loadeddata', () => {
-                try { 音效元素.play().catch(e => console.log('音效播放失败，可能需要用户交互:', e)); } catch (错误) { console.error('音效播放错误:', 错误); }
+                try {
+                    音效元素.play().catch(e => console.log('音效播放失败，可能需要用户交互:', e));
+                } catch (错误) {
+                    console.error('音效播放错误:', 错误);
+                }
             });
-            音效元素.addEventListener('error', (e) => { console.error('音效加载失败:', 音效路径, e); });
+            音效元素.addEventListener('error', (e) => {
+                console.error('音效加载失败:', 音效路径, e);
+            });
             音效元素.addEventListener('ended', () => {
                 const 索引 = 全局音效.indexOf(音效元素);
                 if (索引 !== -1) 全局音效.splice(索引, 1);
@@ -1837,23 +2106,23 @@ function 更新场景(当前节点) {
             当前状态.音效.push(音效元素);
         }
     }
-    
+
     if (节点.条件) {
         const 条件结果 = 解析条件表达式(节点.条件.表达式);
         const 跳转目标 = 条件结果 ? 节点.条件.真目标 : 节点.条件.假目标;
         处理跳转(跳转目标);
         return;
     }
-    
+
     if (节点.自动存档) 自动存档();
     if (节点.解锁CG) 解锁CG(节点.解锁CG.名称, 节点.解锁CG.路径);
-    
+
     const 已有调查层 = document.getElementById('调查层');
     if (已有调查层) 已有调查层.remove();
     document.body.style.cursor = 'default';
     const 存档按钮 = document.getElementById('存档按钮');
     const 返回按钮 = document.getElementById('返回按钮');
-    
+
     if (节点.调查) {
         const 调查设置 = 节点.调查;
         if (存档按钮) 存档按钮.classList.add('隐藏');
@@ -1872,7 +2141,9 @@ function 更新场景(当前节点) {
         const 新调查层 = document.createElement('div');
         新调查层.id = '调查层';
         新调查层.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:101;pointer-events:auto';
-        新调查层.addEventListener('click', (e) => { e.stopPropagation(); });
+        新调查层.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
         document.body.appendChild(新调查层);
         if (调查设置.光标) document.body.style.cursor = 调查设置.光标;
         if (调查设置.区域) {
@@ -1901,16 +2172,19 @@ function 更新场景(当前节点) {
         if (存档按钮) 存档按钮.classList.remove('隐藏');
         if (返回按钮) 返回按钮.classList.add('隐藏');
     }
-    
+
     const 左边容器 = document.getElementById('左边头像容器');
     const 右边容器 = document.getElementById('右边头像容器');
     左边容器.classList.add('隐藏');
     右边容器.classList.add('隐藏');
     左边容器.innerHTML = '';
     右边容器.innerHTML = '';
-    
+
     if (节点.头像) {
-        let 节点头像 = typeof 节点.头像 === 'string' ? { 路径: 节点.头像, 位置: '左' } : 节点.头像;
+        let 节点头像 = typeof 节点.头像 === 'string' ? {
+            路径: 节点.头像,
+            位置: '左'
+        } : 节点.头像;
         if (节点头像.路径) {
             let 头像路径 = 节点头像.路径;
             头像路径 = 替换变量(头像路径, '');
@@ -1930,13 +2204,13 @@ function 更新场景(当前节点) {
         当前状态.头像.显示 = false;
         当前状态.头像.路径 = "";
     }
-    
+
     const 容器 = document.getElementById('对话框容器');
     if (容器) {
         const 有对话内容 = 节点.角色 || 节点.内容;
         const 有选项 = 节点.选项?.length > 0;
         const 有输入框 = 节点.输入;
-        
+
         if (!有对话内容 && !有选项 && !有输入框) {
             容器.style.display = 'none';
             容器.style.animation = '';
@@ -1944,30 +2218,34 @@ function 更新场景(当前节点) {
             容器.style.display = 'block';
             容器.style.animation = 'none';
             void 容器.offsetHeight;
-            
+
             const 角色元素 = 容器.querySelector('.角色');
-            const { 角色: 本地化角色 } = 获取本地化文本(节点);
+            const {
+                角色: 本地化角色
+            } = 获取本地化文本(节点);
             let 处理后的角色 = 替换变量(本地化角色, '');
             角色元素.innerHTML = 处理后的角色;
             角色元素.style.display = 处理后的角色 ? 'block' : 'none';
             if (typeof 应用角色样式 === 'function') 应用角色样式();
             if (节点.动画?.角色) 应用动画(角色元素, 节点.动画.角色);
-            
+
             const 内容元素 = 容器.querySelector('.内容');
-            const { 内容: 本地化内容 } = 获取本地化文本(节点);
+            const {
+                内容: 本地化内容
+            } = 获取本地化文本(节点);
             let 处理后的内容 = 替换变量(本地化内容, '未知');
-            
+
             const 节点逐字配置 = 节点.逐字显示 || {};
             const 逐字启用 = 节点逐字配置.启用 !== undefined ? 节点逐字配置.启用 : 当前状态.逐字显示.启用;
-            
+
             const 初始速度 = 读取配置('初始状态').逐字显示.速度;
             const 逐字速度 = 节点逐字配置.速度 !== undefined ? 节点逐字配置.速度 : 初始速度;
-            
+
             if (节点.逐字显示) {
                 当前状态.逐字显示.启用 = 逐字启用;
                 当前状态.逐字显示.速度 = 逐字速度;
             }
-            
+
             if (逐字启用 && 处理后的内容) {
                 开始逐字显示(内容元素, 处理后的内容, 逐字速度, 节点);
             } else {
@@ -1975,14 +2253,18 @@ function 更新场景(当前节点) {
                 if (节点.动画?.内容) 应用动画(内容元素, 节点.动画.内容);
                 else if (节点.动画?.内容文字) 应用动画(内容元素, 节点.动画.内容文字);
             }
-            
+
             const 选项容器 = 容器.querySelector('.选项容器');
             选项容器.innerHTML = '';
-            
+
             if (有选项) {
                 const 存储键名 = 读取配置('存储键名');
                 const 已选记录 = JSON.parse(localStorage.getItem(存储键名.已选选项) || '{}');
                 节点.选项.forEach((选项, 索引) => {
+                    const 条件满足 = 选项.条件 ? 解析条件表达式(选项.条件) : true;
+                    if (!条件满足 && !选项.否则目标) {
+                        return;
+                    }
                     const 选项按钮 = document.createElement('div');
                     选项按钮.className = '选项按钮';
                     let 选项文本 = '';
@@ -2009,17 +2291,31 @@ function 更新场景(当前节点) {
                         e.stopPropagation();
                         e.preventDefault();
                         if (!已选记录[选项标识]) {
-                            已选记录[选项标识] = { 时间: new Date().toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }), 章节: 当前状态.当前章节, 索引: 当前状态.当前索引, 选项文本: 选项.文本 };
+                            已选记录[选项标识] = {
+                                时间: new Date().toLocaleString('zh-CN', {
+                                    year: 'numeric',
+                                    month: '2-digit',
+                                    day: '2-digit',
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                    hour12: false
+                                }),
+                                章节: 当前状态.当前章节,
+                                索引: 当前状态.当前索引,
+                                选项文本: 选项.文本
+                            };
                             localStorage.setItem(存储键名.已选选项, JSON.stringify(已选记录));
                             this.classList.add('已选');
                         }
-                        选项容器.querySelectorAll('.选项按钮').forEach(btn => { btn.style.pointerEvents = 'none'; });
+                        选项容器.querySelectorAll('.选项按钮').forEach(btn => {
+                            btn.style.pointerEvents = 'none';
+                        });
                         处理选项点击(选项);
                     });
                     选项容器.appendChild(选项按钮);
                 });
             }
-            
+
             if (节点.动画?.对话框) {
                 应用动画(容器, 节点.动画.对话框);
             } else {
@@ -2027,7 +2323,7 @@ function 更新场景(当前节点) {
             }
         }
     }
-    
+
     if (节点.输入) {
         const 输入容器 = document.createElement('div');
         输入容器.className = '输入容器';
@@ -2098,13 +2394,19 @@ function 更新场景(当前节点) {
         输入容器.appendChild(确认按钮);
         容器.querySelector('.选项容器').appendChild(输入容器);
     }
-    
+
     const 背景容器元素 = document.getElementById('背景容器');
     if (节点.动画?.背景 && 背景容器元素) 应用动画(背景容器元素, 节点.动画.背景);
     if (节点.自定义功能) {
-        try { eval(节点.自定义功能); } catch (e) { console.error('自定义功能错误:', e); }
+        try {
+            eval(节点.自定义功能);
+        } catch (e) {
+            console.error('自定义功能错误:', e);
+        }
     }
-    
+
+    添加历史记录(节点, 执行前快照);
+
     if (节点.快进模式 !== undefined) {
         当前状态.快进模式 = 节点.快进模式;
         const 快进按钮 = document.getElementById('快进按钮');
@@ -2113,7 +2415,7 @@ function 更新场景(当前节点) {
             else 快进按钮.classList.remove('激活');
         }
     }
-    
+
     if (当前状态.快进模式) {
         if (节点.选项?.length || 节点.输入 || 节点.调查) {
             停止快进();
@@ -2151,20 +2453,23 @@ function 处理全局点击(e) {
     const 存档界面 = document.getElementById('存档界面');
     if (!存档界面) return;
     if (!存档界面.classList.contains('隐藏')) return;
-    
+
+    const 历史界面 = document.getElementById('历史界面');
+    if (历史界面 && !历史界面.classList.contains('隐藏')) return;
+
     if (e.target.closest('.输入容器')) return;
-    
+
     const 当前章节数据 = 章节库[当前状态.当前章节];
     if (!当前章节数据) return;
     if (当前状态.当前索引 >= 当前章节数据.length) return;
-    
+
     const 当前节点 = 当前章节数据[当前状态.当前索引];
     if (!当前节点) return;
-    
+
     if (当前节点.选项?.length > 0 || 当前节点.输入 || 当前节点.调查) {
         return;
     }
-    
+
     const 正在打字 = document.querySelector(".内容")?.dataset.正在打字 === "true";
     if (正在打字) {
         const 完整内容 = document.querySelector(".内容")?.dataset.完整内容 || "";
@@ -2174,15 +2479,15 @@ function 处理全局点击(e) {
         停止打字效果();
         return;
     }
-    
+
     if (当前状态.快进模式) {
         停止快进();
     }
-    
+
     if (当前状态.自动节点 > 0) {
         return;
     }
-    
+
     if (当前状态.当前索引 < 当前章节数据.length - 1) {
         当前状态.当前索引++;
         更新场景(当前章节数据[当前状态.当前索引]);
@@ -2192,21 +2497,52 @@ function 处理全局点击(e) {
 // ====================== 存档系统 ======================
 function 生成存档快照() {
     return {
-        时间: new Date().toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }),
+        时间: new Date().toLocaleString('zh-CN', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+        }),
         章节: 当前状态.当前章节,
         索引: 当前状态.当前索引,
         背景: 当前状态.背景,
-        背景媒体: { ...当前状态.背景媒体 },
-        标题: { ...当前状态.标题 },
-        头像: { ...当前状态.头像 },
+        背景媒体: {
+            ...当前状态.背景媒体
+        },
+        标题: {
+            ...当前状态.标题
+        },
+        头像: {
+            ...当前状态.头像
+        },
         立绘: {
-            左立绘: { ...当前状态.左立绘, 媒体: { ...(当前状态.左立绘?.媒体 || {}) } },
-            中立绘: { ...当前状态.中立绘, 媒体: { ...(当前状态.中立绘?.媒体 || {}) } },
-            右立绘: { ...当前状态.右立绘, 媒体: { ...(当前状态.右立绘?.媒体 || {}) } }
+            左立绘: {
+                ...当前状态.左立绘,
+                媒体: {
+                    ...(当前状态.左立绘?.媒体 || {})
+                }
+            },
+            中立绘: {
+                ...当前状态.中立绘,
+                媒体: {
+                    ...(当前状态.中立绘?.媒体 || {})
+                }
+            },
+            右立绘: {
+                ...当前状态.右立绘,
+                媒体: {
+                    ...(当前状态.右立绘?.媒体 || {})
+                }
+            }
         },
         音乐: 当前状态.音乐,
         自动节点: 当前状态.自动节点,
-        逐字显示: { 启用: 当前状态.逐字显示.启用, 速度: 当前状态.逐字显示.速度 },
+        逐字显示: {
+            启用: 当前状态.逐字显示.启用,
+            速度: 当前状态.逐字显示.速度
+        },
         用户变量: JSON.parse(JSON.stringify(当前状态.用户变量)),
         打字音效: {
             启用: 当前状态.打字音效.启用,
@@ -2217,7 +2553,9 @@ function 生成存档快照() {
     };
 }
 
-function 恢复存档状态(存档) {
+function 恢复存档状态(存档, 保留历史 = false) {
+    if (!保留历史) 清空历史记录();
+
     if (当前状态.自动节点定时器) {
         clearTimeout(当前状态.自动节点定时器);
         当前状态.自动节点定时器 = null;
@@ -2225,22 +2563,22 @@ function 恢复存档状态(存档) {
     停止打字效果();
     停止快进();
     当前状态.快进模式 = false;
-    
+
     const 已有头像容器 = document.getElementById("对话框头像容器");
     if (已有头像容器) 已有头像容器.remove();
-    
+
     const 已有调查层 = document.getElementById("调查层");
     if (已有调查层) 已有调查层.remove();
-    
+
     document.body.style.cursor = "default";
-    
+
     const 存档按钮 = document.getElementById("存档按钮");
     const 返回按钮 = document.getElementById("返回按钮");
     if (存档按钮) 存档按钮.classList.remove("隐藏");
     if (返回按钮) 返回按钮.classList.add("隐藏");
-    
+
     清除所有动画();
-    
+
     const 初始 = 读取配置("初始状态");
     当前状态 = {
         ...JSON.parse(JSON.stringify(初始)),
@@ -2253,23 +2591,42 @@ function 恢复存档状态(存档) {
             播放间隔: 0,
             音量: 1,
         },
-        标题: 存档.标题 || { 显示: false },
-        头像: 存档.头像 || { 显示: false },
+        标题: 存档.标题 || {
+            显示: false
+        },
+        头像: 存档.头像 || {
+            显示: false
+        },
         立绘: 存档.立绘 || {
             左立绘: {
                 显示: false,
                 路径: "",
-                媒体: { 循环: true, 播放次数: -1, 播放间隔: 0, 音量: 1 },
+                媒体: {
+                    循环: true,
+                    播放次数: -1,
+                    播放间隔: 0,
+                    音量: 1
+                },
             },
             中立绘: {
                 显示: false,
                 路径: "",
-                媒体: { 循环: true, 播放次数: -1, 播放间隔: 0, 音量: 1 },
+                媒体: {
+                    循环: true,
+                    播放次数: -1,
+                    播放间隔: 0,
+                    音量: 1
+                },
             },
             右立绘: {
                 显示: false,
                 路径: "",
-                媒体: { 循环: true, 播放次数: -1, 播放间隔: 0, 音量: 1 },
+                媒体: {
+                    循环: true,
+                    播放次数: -1,
+                    播放间隔: 0,
+                    音量: 1
+                },
             },
         },
         音乐: 存档.音乐 || null,
@@ -2284,11 +2641,11 @@ function 恢复存档状态(存档) {
             ...(存档.打字音效 || {}),
         },
     };
-    
+
     当前状态.标签表 = 建立标签表(章节库[当前状态.当前章节]);
-    
+
     document.body.style.background = 当前状态.背景 || "#222";
-    
+
     if (存档.标题?.显示) {
         const 标题容器 = document.getElementById("标题容器");
         if (标题容器) {
@@ -2308,24 +2665,34 @@ function 恢复存档状态(存档) {
             标题容器.classList.add("标题进入");
         }
     }
-    
+
     ["左立绘", "中立绘", "右立绘"].forEach((位置) => {
         const 元素 = document.getElementById(位置);
         const 存档数据 = 存档.立绘?.[位置] || {
             显示: false,
             路径: "",
-            媒体: { 循环: true, 播放次数: -1, 播放间隔: 0, 音量: 1 },
+            媒体: {
+                循环: true,
+                播放次数: -1,
+                播放间隔: 0,
+                音量: 1
+            },
         };
         当前状态[位置] = {
             ...存档数据,
-            媒体: 存档数据.媒体 || { 循环: true, 播放次数: -1, 播放间隔: 0, 音量: 1 },
+            媒体: 存档数据.媒体 || {
+                循环: true,
+                播放次数: -1,
+                播放间隔: 0,
+                音量: 1
+            },
         };
         if (元素) {
             元素.src = 存档数据.路径 || "";
             元素.style.opacity = 存档数据.显示 ? 1 : 0;
         }
     });
-    
+
     if (存档.头像?.显示 && 存档.头像.路径) {
         当前状态.头像 = {
             显示: 存档.头像.显示,
@@ -2346,7 +2713,7 @@ function 恢复存档状态(存档) {
             目标容器.appendChild(图片元素);
         }
     }
-    
+
     const 播放器 = document.getElementById("背景音乐");
     if (当前状态.音乐 && 播放器) {
         播放器.src = 当前状态.音乐;
@@ -2356,7 +2723,7 @@ function 恢复存档状态(存档) {
         播放器.currentTime = 0;
         播放器.removeAttribute("src");
     }
-    
+
     // 读档时设置变量
     const 当前章节数据 = 章节库[当前状态.当前章节];
     const 当前节点 = 当前章节数据?.[当前状态.当前索引];
@@ -2396,7 +2763,7 @@ function 恢复存档状态(存档) {
         });
         保存用户变量到本地存储();
     }
-    
+
     return 当前状态;
 }
 
@@ -2476,7 +2843,9 @@ function 加载存档(存档位) {
     }
 }
 
-function 加载自动存档() { 加载存档('auto'); }
+function 加载自动存档() {
+    加载存档('auto');
+}
 
 function 加载指定存档(存档标识) {
     const 存储键名 = 读取配置('存储键名');
@@ -2519,41 +2888,70 @@ function 关闭存档界面() {
     document.getElementById('存档界面').classList.add('隐藏');
 }
 
+
+// ====================== 游戏视口尺寸 ======================
+function 转换尺寸值(值) {
+    if (typeof 值 === 'number') return 值 + 'px';
+    if (typeof 值 === 'string') {
+        const 去空格 = 值.trim();
+        if (/^\d+(\.\d+)?$/.test(去空格)) return 去空格 + 'px';
+        return 去空格;
+    }
+    return 值;
+}
+
+function 应用游戏视口配置() {
+    const 视口 = document.getElementById('游戏视口');
+    if (!视口) return;
+    const 配置 = 读取配置('限制游戏视口', {});
+    if (!配置.启用) {
+        视口.classList.remove('固定尺寸');
+        视口.style.width = '';
+        视口.style.height = '';
+        return;
+    }
+    视口.classList.add('固定尺寸');
+    视口.style.width = 转换尺寸值(配置.宽 || '1280px');
+    视口.style.height = 转换尺寸值(配置.高 || '720px');
+}
+
 // ====================== 引擎初始化 ======================
 async function 初始化引擎() {
     await 等待配置加载();
-    
+
+    应用游戏视口配置();
+
     const 存储键名 = 读取配置('存储键名');
     const 初始状态配置 = 读取配置('初始状态');
     const 语言配置数据 = 读取配置('语言配置');
-    
+
     当前语言 = localStorage.getItem(存储键名.语言) || null;
     语言配置表 = 语言配置数据;
-    
+
     if (!当前语言 || !语言配置表.语言列表[当前语言]) {
         当前语言 = 语言配置表.默认语言;
     }
-    
+
     当前状态 = JSON.parse(JSON.stringify(初始状态配置));
-    
+
     初始化CG存储();
     从本地存储加载用户变量();
     await 加载所有章节();
     刷新界面文字();
-    
+
     const url参数 = new URLSearchParams(window.location.search);
     const 存档标识 = url参数.get('存档');
-    
+
     if (存档标识 === 'auto') {
         加载自动存档();
     } else if (存档标识) {
         加载指定存档(parseInt(存档标识));
     }
-    
+
     if (!存档标识 && 章节库.序章?.length) {
         切换章节('序章', 0);
     }
-    
+
     document.addEventListener("click", 处理全局点击);
 }
 // 自动初始化
@@ -2567,13 +2965,13 @@ if (document.readyState === 'loading') {
 // ====================== 隐藏对话框点击空白恢复显示 ======================
 document.addEventListener('click', function(e) {
     if (!隐藏模式激活) return;
-    
+
     if (e.target.closest && e.target.closest('#隐藏对话按钮')) return;
     if (e.target.closest && e.target.closest('.输入容器')) return;
-    
+
     const 存档界面 = document.getElementById('存档界面');
     if (存档界面 && !存档界面.classList.contains('隐藏')) return;
-    
+
     切换对话框隐藏();
     e.stopPropagation();
 }, true);

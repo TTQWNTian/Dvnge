@@ -5,7 +5,7 @@
  *
  * Copyright (c) 2025-2026 Tian
  */
-/* Dvnge_v1.9.6 */
+/* Dvnge_v1.10.0-dev */
 /* js/导出入存档功能.js */
 function 导出存档() {
     const 存储键名 = 读取配置('存储键名');
