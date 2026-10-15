@@ -5,8 +5,10 @@
  *
  * Copyright (c) 2025-2026 Tian
  */
-/* Dvnge_v1.10.0-dev */
-/* js/导出入存档功能.js */
+/*
+ * v1.10.0-dev
+ * 开发者: Tian
+ */
 function 导出存档() {
     const 存储键名 = 读取配置('存储键名');
     const 最大位 = 读取配置('最大存档位', 2);
