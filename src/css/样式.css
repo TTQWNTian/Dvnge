@@ -1,7 +1,5 @@
-/* Dvnge_v1.9.6 */
-/* css/样式.css */
+/* v1.10.0-dev */
 /* 基础样式 */
-
 :root {
     /* 主色调 */
     --color-primary: #889900;
@@ -46,8 +44,22 @@ body {
     background-position: center;
 }
 
+#游戏视口 {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+#游戏视口.固定尺寸 {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
 .背景容器 {
-    position: fixed;
+    position: absolute;
     top: 0;
     left: 0;
     width: 100%;
@@ -62,7 +74,7 @@ body {
 .主容器 {
     display: flex;
     justify-content: center;
-    position: fixed;
+    position: absolute;
     bottom: 10px;
     left: 0;
     width: 100%;
@@ -142,7 +154,7 @@ body {
 
 /* 立绘样式 */
 .立绘 {
-    position: fixed;
+    position: absolute;
     bottom: 0;
     height: 85vh;
     transition: opacity 0.3s;
@@ -163,7 +175,7 @@ body {
 }
 
 .存档按钮 {
-    position: fixed;
+    position: absolute;
     top: 0;
     left: 0;
     padding: 12px;
@@ -178,7 +190,7 @@ body {
 
 /* 返回按钮样式 */
 .返回按钮 {
-    position: fixed;
+    position: absolute;
     top: 0;
     left: 0;
     padding: 12px;
@@ -192,7 +204,7 @@ body {
 }
 
 .自定义按钮 {
-    position: fixed;
+    position: absolute;
     top: 0;
     right: 0;
     padding: 12px;
@@ -205,16 +217,16 @@ body {
     pointer-events: auto;
 }
 
-/* 存档界面 */
-#存档界面 {
-    position: fixed;
+/* 使用于存档界面、历史界面等 */
+.全屏界面 {
+    position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
     background: var(--color-bg-darker);
     color: var(--color-text);
-    padding: 20px 10px;
+    padding: 20px 0;
     overflow-y: auto;
     z-index: 200;
     pointer-events: auto;
@@ -228,7 +240,7 @@ body {
 
 .存档项 {
     background: var(--color-bg-hover);
-    margin: 10px;
+    margin: 10px 20px;
     padding: 15px;
     display: flex;
     justify-content: space-between;
@@ -245,7 +257,7 @@ body {
 }
 
 .关闭按钮 {
-    position: fixed;
+    position: absolute;
     top: 20px;
     right: 20px;
     font-size: 2em;
@@ -271,7 +283,7 @@ body {
 
 /* 存档提示样式 */
 .存档提示 {
-    position: fixed;
+    position: absolute;
     top: 20px;
     left: 50%;
     transform: translateX(-50%);
@@ -327,7 +339,7 @@ body {
 
 /* 标题样式 */
 .标题容器 {
-    position: fixed;
+    position: absolute;
     color: var(--color-text-light);
     font-size: 28px;
     margin: 0 auto;
@@ -421,7 +433,7 @@ body {
 }
 
 .存档操作栏 {
-    position: fixed;
+    position: absolute;
     right: 20px;
     display: flex;
     gap: 10px;
@@ -467,4 +479,93 @@ body {
         opacity: 0;
         transform: scale(0.9);
     }
+}
+
+/* 历史记录界面 */
+#历史界面:not(.隐藏) {
+    display: flex;
+    flex-direction: column;
+}
+
+.历史列表 {
+    flex: 1;
+    padding: 16px 0;
+}
+
+.历史列表::-webkit-scrollbar {
+    width: 8px;
+}
+
+.历史列表::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.历史列表::-webkit-scrollbar-thumb {
+    background: rgba(136, 153, 0, 0.35);
+    border-radius: 4px;
+}
+
+.历史列表::-webkit-scrollbar-thumb:hover {
+    background: rgba(136, 153, 0, 0.65);
+}
+
+.历史项 {
+    position: relative;
+    max-width: 900px;
+    margin: 0 auto 2px;
+    padding: 14px 30px 14px 40px;
+    transition: background 0.2s, border-color 0.2s;
+    border-left: 3px solid transparent;
+}
+
+.历史项.可回退 {
+    cursor: pointer;
+}
+
+.历史项.可回退:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-left-color: var(--color-primary);
+}
+
+.历史项头部 {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 6px;
+}
+
+.历史角色 {
+    font-weight: bold;
+    color: var(--color-primary);
+    font-size: 1em;
+}
+
+.历史时间 {
+    font-size: 0.75em;
+    opacity: 0.4;
+    flex-shrink: 0;
+}
+
+.历史内容 {
+    color: var(--color-text);
+    line-height: 1.6;
+    font-size: 0.95em;
+    word-wrap: break-word;
+}
+
+.历史空提示 {
+    text-align: center;
+    padding: 80px 20px;
+    opacity: 0.4;
+    font-size: 0.95em;
+}
+
+.历史底部提示 {
+    flex-shrink: 0;
+    text-align: center;
+    padding: 12px;
+    font-size: 0.8em;
+    opacity: 0.4;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
