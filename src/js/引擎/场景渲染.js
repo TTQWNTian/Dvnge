@@ -7,11 +7,314 @@
  */
 'use strict';
 
+// ====================== NVL 文本 ======================
+function 获取NVL内容容器() {
+    return document.getElementById('NVL文本内容') || document.getElementById('NVL文本容器');
+}
+
+function 获取NVL可用页高() {
+    const 容器 = document.getElementById('NVL文本容器');
+    if (!容器) return 0;
+    return 容器.clientHeight;
+}
+
+function 获取NVL页面列表() {
+    return Array.from(document.querySelectorAll('#NVL文本内容 .NVL页面'));
+}
+
+function NVL存在下一页() {
+    const 页面 = 获取NVL页面列表();
+    const 页码 = Math.max(0, Number(当前状态?.NVL页码) || 0);
+    return 页码 < 页面.length - 1;
+}
+
+function 更新NVL下一页按钮() {
+    const 按钮 = document.getElementById('NVL下一页按钮');
+    const 页面 = 获取NVL页面列表();
+    if (!按钮) return;
+    const 页码 = Math.max(0, Number(当前状态?.NVL页码) || 0);
+    页面.forEach((页, 索引) => {
+        页.hidden = 索引 !== 页码;
+    });
+    const 有下一页 = 页码 < 页面.length - 1;
+    按钮.classList.toggle('隐藏', !有下一页);
+    按钮.disabled = !有下一页;
+    按钮.setAttribute('aria-hidden', 有下一页 ? 'false' : 'true');
+}
+
+function 翻到NVL下一页() {
+    if (!NVL存在下一页()) {
+        更新NVL下一页按钮();
+        return;
+    }
+    当前状态.NVL页码 = Math.max(0, Number(当前状态.NVL页码) || 0) + 1;
+    更新NVL下一页按钮();
+}
+
+function 拆分NVL超长段落(段落, 页面) {
+    const 内容元素 = 段落.querySelector('.NVL内容');
+    if (!内容元素) return [段落];
+    const 文本 = 内容元素.textContent || '';
+    if (!文本) return [段落];
+    const 字符 = Array.from(文本);
+    const 片段列表 = [];
+    let 起点 = 0;
+    const 测量段落 = 段落.cloneNode(true);
+    const 测量内容 = 测量段落.querySelector('.NVL内容');
+    测量段落.style.marginBottom = getComputedStyle(段落).marginBottom;
+    while (起点 < 字符.length) {
+        let 左 = 起点 + 1;
+        let 右 = 字符.length;
+        let 最佳 = 起点 + 1;
+        while (左 <= 右) {
+            const 中 = Math.floor((左 + 右) / 2);
+            测量内容.textContent = 字符.slice(起点, 中).join('');
+            页面.appendChild(测量段落);
+            const 合适 = 页面.scrollHeight <= 页面.clientHeight + 1;
+            页面.removeChild(测量段落);
+            if (合适) {
+                最佳 = 中;
+                左 = 中 + 1;
+            } else {
+                右 = 中 - 1;
+            }
+        }
+        if (最佳 <= 起点) break;
+        const 新段落 = 段落.cloneNode(true);
+        新段落.querySelector('.NVL内容').textContent = 字符.slice(起点, 最佳).join('');
+        if (起点 > 0) 新段落.querySelector('.NVL角色')?.remove();
+        片段列表.push(新段落);
+        起点 = 最佳;
+    }
+    return 片段列表.length ? 片段列表 : [段落];
+}
+
+function 重建NVL页面() {
+    const 内容容器 = 获取NVL内容容器();
+    if (!内容容器) return;
+    const 原页码 = Math.max(0, Number(当前状态?.NVL页码) || 0);
+    const 原页面 = Array.from(内容容器.children).filter(元素 => 元素.classList.contains('NVL页面'));
+    const 原内容 = 原页面.length
+        ? 原页面.flatMap(页 => Array.from(页.children))
+        : Array.from(内容容器.children);
+    内容容器.innerHTML = '';
+    const 创建页面 = () => {
+        const 页面 = document.createElement('div');
+        页面.className = 'NVL页面';
+        内容容器.appendChild(页面);
+        return 页面;
+    };
+    let 页面 = 创建页面();
+    原内容.forEach(元素 => {
+        页面.appendChild(元素);
+        if (页面.scrollHeight <= 页面.clientHeight + 1) return;
+        页面.removeChild(元素);
+        if (页面.children.length) 页面 = 创建页面();
+        页面.appendChild(元素);
+        if (页面.scrollHeight <= 页面.clientHeight + 1) return;
+        页面.removeChild(元素);
+        const 分段 = 拆分NVL超长段落(元素, 页面);
+        分段.forEach((片段, 索引) => {
+            if (索引 > 0) 页面 = 创建页面();
+            页面.appendChild(片段);
+            if (页面.scrollHeight > 页面.clientHeight + 1 && 页面.children.length > 1) {
+                页面.removeChild(片段);
+                页面 = 创建页面();
+                页面.appendChild(片段);
+            }
+        });
+    });
+    const 页面列表 = 获取NVL页面列表();
+    当前状态.NVL页码 = Math.min(原页码, Math.max(0, 页面列表.length - 1));
+    更新NVL下一页按钮();
+}
+
+function 初始化NVL分页() {
+    const 容器 = document.getElementById('NVL文本容器');
+    const 按钮 = document.getElementById('NVL下一页按钮');
+    if (!容器 || !按钮) return;
+    if (!容器.dataset.nvl分页已绑定) {
+        容器.dataset.nvl分页已绑定 = 'true';
+        window.addEventListener('resize', () => requestAnimationFrame(重建NVL页面));
+    }
+    if (!按钮.dataset.nvl事件已绑定) {
+        按钮.dataset.nvl事件已绑定 = 'true';
+        按钮.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            翻到NVL下一页();
+        });
+    }
+    更新NVL下一页按钮();
+}
+
+function 添加NVL交互记录(类型, 角色, 内容) {
+    if (!当前状态 || 当前状态.显示模式 !== 'NVL') return;
+    if (!Array.isArray(当前状态.NVL文本)) 当前状态.NVL文本 = [];
+
+    const 键 = `${当前状态.当前章节}:${当前状态.当前索引}:${类型}`;
+    const 记录 = {
+        键,
+        类型,
+        角色: 角色 || '',
+        内容: 内容 || '',
+        章节: 当前状态.当前章节,
+        索引: 当前状态.当前索引
+    };
+    const 已有索引 = 当前状态.NVL文本.findIndex(项 => 项.键 === 键);
+    if (已有索引 >= 0) 当前状态.NVL文本[已有索引] = 记录;
+    else 当前状态.NVL文本.push(记录);
+}
+
+function 同步NVL文本(当前节点) {
+    const 容器 = document.getElementById('NVL文本容器');
+    const 内容容器 = 获取NVL内容容器();
+    if (!容器 || !内容容器 || !当前状态 || 当前状态.显示模式 !== 'NVL') {
+        if (容器) 容器.classList.add('隐藏');
+        const 下一页按钮 = document.getElementById('NVL下一页按钮');
+        if (下一页按钮) 下一页按钮.classList.add('隐藏');
+        return;
+    }
+    容器.classList.remove('隐藏');
+    if (!Array.isArray(当前状态.NVL文本)) 当前状态.NVL文本 = [];
+
+    const { 角色: 原始角色, 内容: 原始内容 } = 获取本地化文本(当前节点);
+    const 角色 = 替换变量(原始角色 || '', '');
+    const 内容 = 替换变量(原始内容 || '', '未知');
+    const 有文本 = Boolean(角色 || 内容);
+    const 键 = `${当前状态.当前章节}:${当前状态.当前索引}`;
+
+    try {
+        const 存储键名 = 读取配置('存储键名');
+        const 已选记录 = JSON.parse(localStorage.getItem(存储键名.已选选项) || '{}');
+        Object.entries(已选记录)
+            .filter(([标识, 记录]) => 标识.startsWith(`${当前状态.当前章节}_`) && 记录?.章节 === 当前状态.当前章节)
+            .sort((a, b) => Number(a[1].索引) - Number(b[1].索引))
+            .forEach(([标识, 记录]) => {
+                const 选项键 = `${当前状态.当前章节}:${记录.索引}:选择`;
+                if (!当前状态.NVL文本.some(项 => 项.键 === 选项键)) {
+                    当前状态.NVL文本.push({
+                        键: 选项键,
+                        类型: '选择',
+                        角色: '',
+                        内容: 记录.选项文本 || '',
+                        章节: 当前状态.当前章节,
+                        索引: 记录.索引
+                    });
+                }
+            });
+        当前状态.NVL文本.sort((a, b) => Number(a.索引) - Number(b.索引));
+    } catch (e) {
+        console.error('NVL选项记录恢复失败:', e);
+    }
+
+    if (有文本) {
+        const 记录 = {
+            键,
+            角色,
+            内容,
+            章节: 当前状态.当前章节,
+            索引: 当前状态.当前索引
+        };
+        const 已有索引 = 当前状态.NVL文本.findIndex(项 => 项.键 === 键);
+        if (已有索引 >= 0) 当前状态.NVL文本[已有索引] = 记录;
+        else 当前状态.NVL文本.push(记录);
+    }
+
+    if (当前状态.NVL文本.length > 80) 当前状态.NVL文本.splice(0, 当前状态.NVL文本.length - 80);
+    const 原页码 = Math.max(0, Number(当前状态.NVL页码) || 0);
+    内容容器.innerHTML = ''; 
+
+    当前状态.NVL文本.forEach((记录, 索引) => {
+        const 段落 = document.createElement('section');
+        段落.className = 'NVL段落';
+        段落.dataset.nvlKey = 记录.键 || '';
+        if (记录.类型 === '选择') 段落.classList.add('NVL选择记录');
+        if (记录.类型 === '输入') 段落.classList.add('NVL输入记录');
+
+        if (记录.角色) {
+            const 角色元素 = document.createElement('div');
+            角色元素.className = 'NVL角色';
+            if (记录.类型) 角色元素.textContent = 记录.角色;
+            else 角色元素.innerHTML = 记录.角色;
+            段落.appendChild(角色元素);
+        }
+        const 内容元素 = document.createElement('div');
+        内容元素.className = 'NVL内容';
+        段落.appendChild(内容元素);
+        内容容器.appendChild(段落);
+
+        if (记录.类型) {
+            内容元素.textContent = 记录.内容 || '';
+            内容元素.dataset.正在打字 = 'false';
+            return;
+        }
+
+        const 是当前段落 = 索引 === 当前状态.NVL文本.length - 1 &&
+            记录.键 === 键 && 有文本;
+        if (是当前段落) {
+            const 节点逐字配置 = 当前节点.逐字显示 || {};
+            const 启用逐字 = 节点逐字配置.启用 !== undefined ?
+                节点逐字配置.启用 : 当前状态.逐字显示?.启用;
+            const 初始速度 = 读取配置('初始状态').逐字显示.速度;
+            const 速度 = 节点逐字配置.速度 !== undefined ? 节点逐字配置.速度 : 初始速度;
+            if (启用逐字 && 记录.内容) {
+                开始逐字显示(内容元素, 记录.内容, 速度, 当前节点);
+            } else {
+                内容元素.innerHTML = 记录.内容;
+                内容元素.dataset.正在打字 = 'false';
+            }
+        } else {
+            内容元素.innerHTML = 记录.内容 || '';
+            内容元素.dataset.正在打字 = 'false';
+        }
+    });
+
+    当前状态.NVL页码 = 原页码;
+    requestAnimationFrame(重建NVL页面);
+}
+
 function 更新场景(当前节点) {
     节点 = 当前节点;
     if (!节点) return;
 
+    const 原对话框 = document.getElementById('对话框容器');
+    const 原选项容器 = 原对话框?.querySelector('.选项容器') || document.querySelector('#NVL文本容器 .选项容器');
+    if (原对话框 && 原选项容器 && 原选项容器.parentElement !== 原对话框) {
+        原选项容器.classList.remove('NVL选项容器');
+        原选项容器.style.display = '';
+        原选项容器.style.visibility = '';
+        原选项容器.style.opacity = '';
+        原选项容器.style.pointerEvents = '';
+        原对话框.appendChild(原选项容器);
+    }
+
     const 执行前快照 = 生成存档快照();
+
+    if (!当前状态.显示模式) 当前状态.显示模式 = 'ADV';
+    if (!Array.isArray(当前状态.NVL文本)) 当前状态.NVL文本 = [];
+    if (节点.显示模式) {
+        const 新模式 = String(节点.显示模式).toUpperCase() === 'NVL' ? 'NVL' : 'ADV';
+        if (新模式 !== 当前状态.显示模式) {
+            当前状态.NVL文本 = [];
+            当前状态.NVL滚动位置 = 0;
+            当前状态.NVL页码 = 0;
+            const NVL内容容器 = 获取NVL内容容器();
+            if (NVL内容容器) NVL内容容器.innerHTML = '';
+        }
+        当前状态.显示模式 = 新模式;
+    }
+    const 游戏视口 = document.getElementById('游戏视口');
+    const NVL容器状态 = document.getElementById('NVL文本容器');
+    if (游戏视口) {
+        游戏视口.classList.toggle('NVL模式', 当前状态.显示模式 === 'NVL');
+        游戏视口.classList.remove('NVL交互中');
+    }
+    if (NVL容器状态) NVL容器状态.classList.toggle('隐藏', 当前状态.显示模式 !== 'NVL');
+    if (当前状态.显示模式 !== 'NVL') {
+        const NVL下一页按钮 = document.getElementById('NVL下一页按钮');
+        if (NVL下一页按钮) NVL下一页按钮.classList.add('隐藏');
+    }
 
     停止当前音效();
     停止打字效果();
@@ -438,11 +741,15 @@ function 更新场景(当前节点) {
         当前状态.头像.路径 = "";
     }
 
+    同步NVL文本(节点);
+
     const 容器 = document.getElementById('对话框容器');
     if (容器) {
-        const 有对话内容 = 节点.角色 || 节点.内容;
+        const 有对话内容 = 当前状态.显示模式 !== 'NVL' && (节点.角色 || 节点.内容);
         const 有选项 = 节点.选项?.length > 0;
         const 有输入框 = 节点.输入;
+        const NVL需要交互面板 = 当前状态.显示模式 === 'NVL' && (有选项 || 有输入框);
+        if (游戏视口) 游戏视口.classList.toggle('NVL交互中', Boolean(NVL需要交互面板));
 
         if (!有对话内容 && !有选项 && !有输入框) {
             容器.style.display = 'none';
@@ -456,7 +763,7 @@ function 更新场景(当前节点) {
             const {
                 角色: 本地化角色
             } = 获取本地化文本(节点);
-            let 处理后的角色 = 替换变量(本地化角色, '');
+            let 处理后的角色 = 当前状态.显示模式 === 'NVL' ? '' : 替换变量(本地化角色, '');
             角色元素.innerHTML = 处理后的角色;
             角色元素.style.display = 处理后的角色 ? 'block' : 'none';
             if (typeof 应用角色样式 === 'function') 应用角色样式();
@@ -466,7 +773,7 @@ function 更新场景(当前节点) {
             const {
                 内容: 本地化内容
             } = 获取本地化文本(节点);
-            let 处理后的内容 = 替换变量(本地化内容, '未知');
+            let 处理后的内容 = 当前状态.显示模式 === 'NVL' ? '' : 替换变量(本地化内容, '未知');
 
             const 节点逐字配置 = 节点.逐字显示 || {};
             const 逐字启用 = 节点逐字配置.启用 !== undefined ? 节点逐字配置.启用 : 当前状态.逐字显示.启用;
@@ -519,10 +826,14 @@ function 更新场景(当前节点) {
                         }
                     }
                     const 选项标识 = `${当前状态.当前章节}_${当前状态.当前索引}_${索引}`;
-                    if (已选记录[选项标识]) 选项按钮.classList.add('已选');
+                    if (已选记录[选项标识]) {
+                        选项按钮.classList.add('已选');
+                        选项按钮.setAttribute('aria-pressed', 'true');
+                    }
                     选项按钮.addEventListener('click', function(e) {
                         e.stopPropagation();
                         e.preventDefault();
+                        if (已选记录[选项标识]) return;
                         if (!已选记录[选项标识]) {
                             已选记录[选项标识] = {
                                 时间: new Date().toLocaleString('zh-CN', {
@@ -535,10 +846,13 @@ function 更新场景(当前节点) {
                                 }),
                                 章节: 当前状态.当前章节,
                                 索引: 当前状态.当前索引,
-                                选项文本: 选项.文本
+                                选项文本: 选项文本
                             };
                             localStorage.setItem(存储键名.已选选项, JSON.stringify(已选记录));
                             this.classList.add('已选');
+                            if (当前状态.显示模式 === 'NVL') {
+                                添加NVL交互记录('选择', '', 选项文本);
+                            }
                         }
                         选项容器.querySelectorAll('.选项按钮').forEach(btn => {
                             btn.style.pointerEvents = 'none';
@@ -609,6 +923,8 @@ function 更新场景(当前节点) {
             }
             当前状态.用户变量[节点.输入.变量名] = 输入值;
             保存用户变量到本地存储();
+            const 输入提示 = 输入容器.querySelector('.输入提示文字')?.textContent || 节点.输入.变量名 || '输入';
+            添加NVL交互记录('输入', 输入提示, 输入值);
             输入容器.remove();
             document.addEventListener("click", 处理全局点击);
             处理跳转(节点.输入.目标);
@@ -626,6 +942,29 @@ function 更新场景(当前节点) {
         输入容器.appendChild(输入框);
         输入容器.appendChild(确认按钮);
         容器.querySelector('.选项容器').appendChild(输入容器);
+    }
+
+    if (当前状态.显示模式 === 'NVL' && (节点.选项?.length || 节点.输入)) {
+        const NVL容器 = document.getElementById('NVL文本容器');
+        const 选项容器 = document.querySelector('#对话框容器 .选项容器');
+        if (NVL容器 && 选项容器) {
+            const 内联交互 = document.createElement('section');
+            内联交互.className = 'NVL内联交互';
+            内联交互.setAttribute('aria-label', '剧情交互');
+            选项容器.classList.add('NVL选项容器');
+            选项容器.style.display = 'flex';
+            选项容器.style.visibility = 'visible';
+            选项容器.style.opacity = '1';
+            选项容器.style.pointerEvents = 'auto';
+            内联交互.appendChild(选项容器);
+            const NVL内容容器 = 获取NVL内容容器();
+            NVL内容容器.appendChild(内联交互);
+            内联交互.style.display = 'block';
+            内联交互.style.visibility = 'visible';
+            内联交互.style.opacity = '1';
+            内联交互.style.pointerEvents = 'auto';
+            requestAnimationFrame(重建NVL页面);
+        }
     }
 
     const 背景容器元素 = document.getElementById('背景容器');

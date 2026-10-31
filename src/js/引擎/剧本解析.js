@@ -58,6 +58,12 @@ function 解析指令行(行) {
             结果.背景 = 参数[0];
             break;
 
+        case '模式': {
+            const 模式 = String(参数[0] || 'ADV').trim().toUpperCase();
+            if (模式 === 'ADV' || 模式 === 'NVL') 结果.显示模式 = 模式;
+            break;
+        }
+
         case '音乐':
             结果.音乐 = {
                 路径: 参数[0],

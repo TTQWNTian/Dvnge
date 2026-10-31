@@ -316,7 +316,9 @@ function 停止打字效果() {
             }
         } catch (e) {}
     }
-    const 内容元素 = document.querySelector(".内容");
+    const 内容元素 = 当前状态?.显示模式 === 'NVL'
+        ? document.querySelector("#NVL文本容器 .NVL段落:last-child .NVL内容")
+        : document.querySelector(".内容");
     if (内容元素 && 内容元素.dataset.正在打字 === "true") {
         const 完整内容 = 内容元素.dataset.完整内容 || "";
         内容元素.innerHTML = 完整内容;
@@ -381,13 +383,26 @@ function 解析条件表达式(表达式) {
     if (!表达式) return true;
 
     try {
-        return new Function("vars", "getVar", "Math", `
-      try {
-        return ${表达式};
-      } catch {
-        return false;
-      }
-    `)(当前状态.用户变量, 获取变量路径, Math);
+        // 支持直接使用中文变量名，例如“好感 >= 5”。
+        // 只替换当前变量表中真实存在的变量，避免改写字符串、属性路径或 JS 关键字。
+        const 变量表 = 当前状态?.用户变量 || {};
+        const 可执行表达式 = String(表达式).replace(
+            /(^|[^\w$\.\u4e00-\u9fff])([\u4e00-\u9fff][\u4e00-\u9fff\w]*)/g,
+            (完整匹配, 前缀, 变量名) => {
+                if (Object.prototype.hasOwnProperty.call(变量表, 变量名)) {
+                    return `${前缀}vars[${JSON.stringify(变量名)}]`;
+                }
+                return 完整匹配;
+            }
+        );
+
+        return Boolean(new Function("vars", "getVar", "Math", `
+            try {
+                return (${可执行表达式});
+            } catch {
+                return false;
+            }
+        `)(变量表, 获取变量路径, Math));
     } catch (e) {
         console.error("条件解析错误:", e, "表达式:", 表达式);
         return false;

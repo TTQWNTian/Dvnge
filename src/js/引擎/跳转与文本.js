@@ -163,7 +163,7 @@ function 刷新当前对话() {
 
     const 角色元素 = 容器.querySelector('.角色');
     const 内容元素 = 容器.querySelector('.内容');
-    const 选项容器 = 容器.querySelector('.选项容器');
+    const 选项容器 = document.querySelector('#对话框容器 .选项容器, #NVL文本容器 .选项容器');
 
     const {
         角色,
@@ -235,7 +235,7 @@ function 刷新当前对话() {
     }
 
     if (当前节点.输入) {
-        const 输入容器 = 容器.querySelector('.输入容器');
+        const 输入容器 = document.querySelector('#对话框容器 .输入容器, #NVL文本容器 .输入容器');
         if (输入容器) {
             const 提示元素 = 输入容器.querySelector('.输入提示文字');
             if (提示元素 && 当前节点.输入.提示文字) {

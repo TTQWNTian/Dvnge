@@ -25,6 +25,7 @@ function 处理全局点击(e) {
     if (历史界面 && !历史界面.classList.contains('隐藏')) return;
 
     if (e.target.closest('.输入容器')) return;
+    if (当前状态.显示模式 === 'NVL' && NVL存在下一页()) return;
 
     const 当前章节数据 = 章节库[当前状态.当前章节];
     if (!当前章节数据) return;
@@ -37,9 +38,12 @@ function 处理全局点击(e) {
         return;
     }
 
-    const 正在打字 = document.querySelector(".内容")?.dataset.正在打字 === "true";
+    const 当前打字元素 = 当前状态.显示模式 === 'NVL'
+        ? document.querySelector("#NVL文本容器 .NVL段落:last-child .NVL内容")
+        : document.querySelector(".内容");
+    const 正在打字 = 当前打字元素?.dataset.正在打字 === "true";
     if (正在打字) {
-        const 完整内容 = document.querySelector(".内容")?.dataset.完整内容 || "";
+        const 完整内容 = 当前打字元素?.dataset.完整内容 || "";
         if (完整内容.includes('<wait')) {
             return;
         }
@@ -74,6 +78,9 @@ function 生成存档快照() {
         }),
         章节: 当前状态.当前章节,
         索引: 当前状态.当前索引,
+        显示模式: 当前状态.显示模式 || 'ADV',
+        NVL文本: JSON.parse(JSON.stringify(当前状态.NVL文本 || [])),
+        NVL页码: Number(当前状态.NVL页码) || 0,
         背景: 当前状态.背景,
         背景媒体: {
             ...当前状态.背景媒体
@@ -151,6 +158,9 @@ function 恢复存档状态(存档, 保留历史 = false) {
         ...JSON.parse(JSON.stringify(初始)),
         当前章节: 存档.章节 || "初遇",
         当前索引: 存档.索引 || 0,
+        显示模式: 存档.显示模式 || 'ADV',
+        NVL文本: Array.isArray(存档.NVL文本) ? 存档.NVL文本 : [],
+        NVL页码: Number(存档.NVL页码) || 0,
         背景: 存档.背景 || "#222",
         背景媒体: 存档.背景媒体 || {
             循环: true,

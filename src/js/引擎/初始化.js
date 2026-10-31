@@ -51,6 +51,7 @@ async function 初始化引擎() {
     }
 
     当前状态 = JSON.parse(JSON.stringify(初始状态配置));
+    初始化NVL分页();
 
     初始化CG存储();
     从本地存储加载用户变量();
@@ -71,6 +72,17 @@ async function 初始化引擎() {
     }
 
     document.addEventListener("click", 处理全局点击);
+
+    const 游戏视口 = document.getElementById('游戏视口');
+    if (游戏视口 && !游戏视口.dataset.nvl点击已绑定) {
+        游戏视口.dataset.nvl点击已绑定 = 'true';
+        游戏视口.addEventListener('click', (e) => {
+            if (当前状态?.显示模式 !== 'NVL') return;
+            e.stopPropagation();
+            if (e.target.closest('.NVL内联交互, .选项按钮, .输入容器, input, button, select, textarea, a, [role="button"], #存档界面, #历史界面, #隐藏对话按钮')) return;
+            处理全局点击(e);
+        });
+    }
 }
 // ====================== 隐藏对话框点击空白恢复显示 ======================
 document.addEventListener('click', function(e) {

@@ -569,3 +569,171 @@ body {
     opacity: 0.4;
     border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
+
+
+/* NVL */
+.NVL文本容器 {
+    position: absolute;
+    z-index: 60;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+    color: var(--color-text-light);
+    background: linear-gradient(180deg, rgba(0,0,0,.12), rgba(0,0,0,.30));
+    pointer-events: none;
+}
+.NVL文本容器.隐藏 { display: none; }
+.NVL文本内容 {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+}
+.NVL页面 {
+    position: absolute;
+    inset: 0;
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    padding: 7vh 10% 13vh;
+}
+.NVL页面[hidden] { display: none !important; }
+.NVL段落 {
+    break-inside: auto;
+    pointer-events: auto;
+    cursor: pointer;
+    max-width: 1100px;
+    margin: 0 0 1.35em;
+    font-size: clamp(1.05rem, 2.2vw, 1.45rem);
+    line-height: 1.9;
+    letter-spacing: .025em;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    text-shadow: 0 2px 5px rgba(0,0,0,.85);
+}
+.NVL角色 {
+    margin: 0 0 .35em;
+    color: var(--color-primary);
+    font-size: .9em;
+    font-weight: 700;
+    letter-spacing: .08em;
+}
+.NVL内容 { margin: 0; }
+
+/* NVL 交互样式 */
+#游戏视口.NVL模式 .主容器 { display: none; }
+.NVL内联交互 {
+    position: relative;
+    z-index: 70;
+    display: block;
+    width: 100%;
+    max-width: 1100px;
+    margin: 1.4em auto 1.5em;
+    padding: 0 0 2em;
+    color: var(--color-text-light);
+    pointer-events: auto;
+    visibility: visible;
+    opacity: 1;
+    border: 0;
+    background: transparent;
+    break-inside: avoid-column;
+}
+.NVL内联交互 .选项容器,
+.NVL内联交互 .NVL选项容器 {
+    display: flex !important;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    width: 100%;
+    min-height: 1px;
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+}
+.NVL内联交互 .选项按钮 {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    width: 100%;
+    padding: 9px 0;
+    border: 0 !important;
+    border-radius: 0;
+    text-align: left;
+    color: inherit;
+    background: transparent !important;
+    box-shadow: none !important;
+    cursor: pointer;
+    pointer-events: auto !important;
+}
+.NVL内联交互 .选项按钮::before {
+    content: '›';
+    display: inline-block;
+    margin-right: .65em;
+    color: var(--color-primary);
+    transition: transform .18s ease;
+}
+.NVL内联交互 .选项按钮:hover,
+.NVL内联交互 .选项按钮:focus-visible {
+    color: var(--color-primary);
+    outline: none;
+    text-decoration: underline;
+    text-underline-offset: .2em;
+}
+.NVL内联交互 .选项按钮:hover::before,
+.NVL内联交互 .选项按钮:focus-visible::before { transform: translateX(3px); }
+.NVL内联交互 .输入容器 {
+    display: flex;
+    flex-wrap: wrap;
+    max-width: 720px;
+    margin-top: .5em;
+    padding: 0;
+    gap: 12px;
+}
+.NVL内联交互 .输入框 {
+    background: rgba(0,0,0,.28);
+}
+.NVL内联交互 .输入确认按钮 { cursor: pointer; }
+.NVL选择记录 .NVL角色 { color: var(--color-primary); }
+.NVL选择记录 .NVL内容 { opacity: .45; }
+.NVL输入记录 .NVL角色 { color: var(--color-primary); }
+.NVL下一页按钮 {
+    position: absolute;
+    right: 3%;
+    bottom: 3%;
+    z-index: 95;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    padding: 0;
+    border: 0;
+    color: var(--color-text-light);
+    background: transparent;
+    font-size: 2rem;
+    line-height: 1;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, .8);
+    cursor: pointer;
+}
+.NVL下一页按钮::before {
+    content: '下一页';
+    position: absolute;
+    right: 100%;
+    margin-right: 8px;
+    font-size: .72rem;
+    white-space: nowrap;
+    opacity: .8;
+}
+.NVL下一页按钮.隐藏 { display: none; }
+.NVL内联交互 .选项按钮.已选 {
+    opacity: .45 !important;
+    pointer-events: none;
+}
+@media (prefers-reduced-motion: reduce) {
+    .NVL文本容器 { scroll-behavior: auto; }
+}
